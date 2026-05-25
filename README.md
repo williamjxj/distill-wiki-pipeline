@@ -4,6 +4,8 @@ Multi-LLM research pipeline: collect LLM chat outputs, distill them into a compo
 
 Based on [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). See [`wiki/README.md`](wiki/README.md) for wiki submodule documentation.
 
+![Distill Wiki Pipeline](docs/index.png)
+
 ## What this repo is
 
 ```
