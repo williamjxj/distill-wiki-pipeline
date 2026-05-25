@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-25  
 **Status:** Approved  
-**Repo:** `experimental-app` (parent) + `project-wiki` submodule at `wiki/`  
+**Repo:** `distill-wiki-pipeline` (parent) + `project-wiki` submodule at `wiki/`  
 **Builds on:** [2026-05-24-project-wiki-design.md](../../../wiki/docs/superpowers/specs/2026-05-24-project-wiki-design.md)
 
 ## Summary
@@ -42,7 +42,7 @@ A local web application that operates the LLM-Wiki ETL pipeline independently of
 ## Architecture
 
 ```
-experimental-app/
+distill-wiki-pipeline/
 ├── wiki/                          # git submodule (source of truth)
 ├── docs/                          # synced exports (unchanged)
 ├── scripts/
@@ -142,7 +142,7 @@ UI or CLI: sync
 
 ```yaml
 wiki_root: ../wiki          # relative to pipeline/ or absolute
-parent_root: ..             # experimental-app root
+parent_root: ..             # distill-wiki-pipeline root
 
 llm:
   default: ollama

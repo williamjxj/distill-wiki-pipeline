@@ -106,9 +106,9 @@ Add to Cursor (`.cursor/mcp.json`) or Claude Desktop config. Adjust paths to you
 {
   "mcpServers": {
     "wiki-pipeline": {
-      "command": "/path/to/experimental-app/pipeline/venv/bin/python",
+      "command": "/path/to/distill-wiki-pipeline/pipeline/venv/bin/python",
       "args": ["-m", "pipeline.mcp.server"],
-      "cwd": "/path/to/experimental-app/pipeline"
+      "cwd": "/path/to/distill-wiki-pipeline/pipeline"
     }
   }
 }
@@ -132,7 +132,7 @@ If not using a venv, use your system `python3` and ensure `wiki-pipeline` is ins
 Run lint on a schedule and append JSON results to a log:
 
 ```cron
-0 9 * * * /path/to/experimental-app/scripts/wiki-pipeline lint --json >> /tmp/wiki-lint.log 2>&1
+0 9 * * * /path/to/distill-wiki-pipeline/scripts/wiki-pipeline lint --json >> /tmp/wiki-lint.log 2>&1
 ```
 
 Use absolute paths in cron. Activate is not required if the shebang script invokes the venv Python, or point cron at `pipeline/venv/bin/python -m pipeline.cli.main lint --json`.

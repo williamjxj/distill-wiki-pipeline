@@ -6,7 +6,7 @@ export_cycle: 1
 sources_ingested: 3
 ---
 
-# Project Brief: Experimental App — LLM-Wiki Pipeline
+# Project Brief: Distill-Wiki-Pipeline — LLM-Wiki Pipeline
 
 ## Problem
 

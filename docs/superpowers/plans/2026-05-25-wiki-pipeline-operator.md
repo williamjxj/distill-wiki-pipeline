@@ -1325,7 +1325,7 @@ Add to MCP config:
 {
   "mcpServers": {
     "wiki-pipeline": {
-      "command": "/path/to/experimental-app/scripts/wiki-pipeline",
+      "command": "/path/to/distill-wiki-pipeline/scripts/wiki-pipeline",
       "args": ["mcp"]
     }
   }

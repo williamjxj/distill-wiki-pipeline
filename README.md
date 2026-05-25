@@ -1,13 +1,13 @@
-# Experimental App
+# Distill-Wiki-Pipeline
 
-A testbed for the **LLM-Wiki research pipeline** — collect multi-LLM research, distill it into a compounding wiki, and sync synthesis into this repo for agentic development.
+Multi-LLM research pipeline: collect LLM chat outputs, distill them into a compounding wiki, lint for contradictions, and export synthesis briefs for agentic development.
 
 Based on [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). See [`wiki/README.md`](wiki/README.md) for wiki submodule documentation.
 
 ## What this repo is
 
 ```
-experimental-app/
+distill-wiki-pipeline/
 ├── docs/
 │   ├── PROJECT_BRIEF.md              # synced synthesis for dev handoff
 │   ├── RESEARCH_THESIS.md            # optional running research view
