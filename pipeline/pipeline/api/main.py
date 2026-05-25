@@ -7,7 +7,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Wiki Pipeline Operator")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+        allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
     )
