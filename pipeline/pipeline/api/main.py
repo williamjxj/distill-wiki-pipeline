@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pipeline.api.routes import lint, log, raw, status, sync
+from pipeline.api.routes import jobs, lint, log, raw, status, sync
 
 
 def create_app() -> FastAPI:
@@ -16,6 +16,7 @@ def create_app() -> FastAPI:
     app.include_router(sync.router, prefix="/api")
     app.include_router(raw.router, prefix="/api")
     app.include_router(log.router, prefix="/api")
+    app.include_router(jobs.router, prefix="/api")
     return app
 
 
