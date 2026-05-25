@@ -1,0 +1,31 @@
+[project]
+name = "wiki-pipeline"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "pyyaml>=6.0",
+  "httpx>=0.27",
+  "typer>=0.12",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "mcp>=1.0",
+  "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
+
+[project.scripts]
+wiki-pipeline = "pipeline.cli.main:app"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pipeline*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

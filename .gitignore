@@ -21,3 +21,12 @@ out/
 
 # IDE
 .idea/
+
+# Python pipeline
+pipeline/.venv/
+pipeline/__pycache__/
+pipeline/**/__pycache__/
+pipeline/.pytest_cache/
+pipeline/ui/node_modules/
+pipeline/ui/dist/
+*.egg-info/

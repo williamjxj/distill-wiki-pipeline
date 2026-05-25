@@ -1,0 +1,12 @@
+wiki_root: ../wiki
+parent_root: ..
+llm:
+  default: ollama
+  ollama_base_url: http://localhost:11434
+  models:
+    ollama: llama3.1:8b
+  overrides:
+    export_brief: ollama
+server:
+  host: 127.0.0.1
+  port: 8787
