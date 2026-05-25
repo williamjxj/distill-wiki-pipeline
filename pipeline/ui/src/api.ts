@@ -146,3 +146,44 @@ export function approveExport(jobId: string): Promise<ExportJob> {
 export function getExportJob(jobId: string): Promise<ExportJob> {
   return fetchJson<ExportJob>(`/api/jobs/export/${jobId}`);
 }
+
+export interface GraphNode {
+  id: string;
+  label: string;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+}
+
+export interface GraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+export function getGraph(): Promise<GraphData> {
+  return fetchJson<GraphData>("/api/graph");
+}
+
+export function getEvolvingThesis(): Promise<{ content: string }> {
+  return fetchJson<{ content: string }>("/api/wiki/evolving-thesis");
+}
+
+export interface UploadRawResult {
+  path: string;
+  meta: Record<string, unknown>;
+}
+
+export function uploadRaw(formData: FormData): Promise<UploadRawResult> {
+  return fetch(`${API_BASE}/api/raw/upload`, {
+    method: "POST",
+    body: formData,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(detail || `Upload failed: ${response.status}`);
+    }
+    return response.json() as Promise<UploadRawResult>;
+  });
+}

@@ -1,3 +1,9 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .page h1 {
   margin: 0 0 0.5rem;
   font-size: 1.5rem;
@@ -6,6 +12,57 @@
 .count {
   margin: 0 0 1rem;
   color: var(--muted);
+}
+
+.uploadSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.uploadSection h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.uploadForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.field,
+.fieldWide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.field input,
+.field select,
+.fieldWide input {
+  font: inherit;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.uploadActions {
+  grid-column: 1 / -1;
+}
+
+.success {
+  margin: 0;
+  color: #027a48;
 }
 
 .list {

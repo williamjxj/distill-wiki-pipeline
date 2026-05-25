@@ -1,7 +1,9 @@
 import { NavLink, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import ExportWizard from "./pages/ExportWizard";
+import GraphView from "./pages/GraphView";
 import IngestWizard from "./pages/IngestWizard";
+import LintDashboard from "./pages/LintDashboard";
 import LogViewer from "./pages/LogViewer";
 import RawQueue from "./pages/RawQueue";
 import styles from "./App.module.css";
@@ -45,6 +47,22 @@ export default function App() {
           Export
         </NavLink>
         <NavLink
+          to="/lint"
+          className={({ isActive }) =>
+            isActive ? `${styles.link} ${styles.active}` : styles.link
+          }
+        >
+          Lint
+        </NavLink>
+        <NavLink
+          to="/graph"
+          className={({ isActive }) =>
+            isActive ? `${styles.link} ${styles.active}` : styles.link
+          }
+        >
+          Graph
+        </NavLink>
+        <NavLink
           to="/log"
           className={({ isActive }) =>
             isActive ? `${styles.link} ${styles.active}` : styles.link
@@ -60,6 +78,8 @@ export default function App() {
           <Route path="/raw" element={<RawQueue />} />
           <Route path="/ingest" element={<IngestWizard />} />
           <Route path="/export" element={<ExportWizard />} />
+          <Route path="/lint" element={<LintDashboard />} />
+          <Route path="/graph" element={<GraphView />} />
           <Route path="/log" element={<LogViewer />} />
         </Routes>
       </main>

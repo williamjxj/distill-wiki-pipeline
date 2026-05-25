@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import DiffView from "../components/DiffView";
 import {
   approveAnalysis,
   approveDraft,
   confirmIngest,
+  getEvolvingThesis,
   getPendingRaw,
   startIngest,
   type IngestJob,
@@ -25,6 +27,7 @@ export default function IngestWizard() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [priorThesis, setPriorThesis] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -75,6 +78,31 @@ export default function IngestWizard() {
     setSelectedPath(initialPath);
     void runStartIngest(initialPath);
   }, [initialPath, job, actionLoading, loading, runStartIngest]);
+
+  useEffect(() => {
+    if (step !== 3) {
+      return;
+    }
+    let cancelled = false;
+
+    async function loadThesis() {
+      try {
+        const data = await getEvolvingThesis();
+        if (!cancelled) {
+          setPriorThesis(data.content);
+        }
+      } catch {
+        if (!cancelled) {
+          setPriorThesis("");
+        }
+      }
+    }
+
+    void loadThesis();
+    return () => {
+      cancelled = true;
+    };
+  }, [step]);
 
   async function handleSelectContinue() {
     if (!selectedPath) {
@@ -237,7 +265,7 @@ export default function IngestWizard() {
       {step === 3 && (
         <section className={styles.section}>
           <h2>Draft preview</h2>
-          <DraftFields payload={job?.draft_payload} />
+          <DraftFields payload={job?.draft_payload} priorThesis={priorThesis} />
           <div className={styles.actions}>
             <button
               type="button"
@@ -290,14 +318,22 @@ export default function IngestWizard() {
 
 function DraftFields({
   payload,
+  priorThesis,
 }: {
   payload: IngestJob["draft_payload"] | undefined;
+  priorThesis: string;
 }) {
   if (!payload) {
     return <p className={styles.muted}>No draft payload available.</p>;
   }
 
   const conceptUpdates = payload.concept_updates ?? {};
+  const thesisDelta = payload.thesis_delta ?? "";
+  const thesisAfter = thesisDelta
+    ? priorThesis
+      ? `${priorThesis.replace(/\n?$/, "\n")}${thesisDelta}`
+      : thesisDelta
+    : priorThesis;
 
   return (
     <>
@@ -322,7 +358,15 @@ function DraftFields({
 
       <div className={styles.field}>
         <span className={styles.fieldLabel}>thesis_delta</span>
-        <pre className={styles.pre}>{payload.thesis_delta ?? "—"}</pre>
+        {thesisDelta ? (
+          <DiffView
+            before={priorThesis}
+            after={thesisAfter}
+            title="Evolving thesis change"
+          />
+        ) : (
+          <pre className={styles.pre}>—</pre>
+        )}
       </div>
     </>
   );
