@@ -46,5 +46,12 @@ def sync(brief_only: bool = typer.Option(False, "--brief-only")):
         typer.echo(f"WARNING: {w}")
 
 
+@app.command()
+def serve(host: str = "127.0.0.1", port: int = 8787):
+    import uvicorn
+
+    uvicorn.run("pipeline.api.main:app", host=host, port=port, reload=True)
+
+
 if __name__ == "__main__":
     app()
