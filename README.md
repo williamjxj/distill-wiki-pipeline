@@ -60,10 +60,25 @@ git add docs/ wiki
 git commit -m "sync research synthesis"
 ```
 
+## Wiki Pipeline Operator
+
+For a local web UI and CLI to ingest, lint, export, and sync without Cursor:
+
+- **Operator guide:** [`docs/WIKI_PIPELINE_OPERATOR.md`](docs/WIKI_PIPELINE_OPERATOR.md) — setup, CLI, MCP, cron
+- **Design spec:** [`docs/superpowers/specs/2026-05-25-wiki-pipeline-operator-design.md`](docs/superpowers/specs/2026-05-25-wiki-pipeline-operator-design.md)
+
+Quick start after setup (see operator guide):
+
+```bash
+./scripts/wiki-pipeline serve          # API on localhost:8787
+cd pipeline/ui && npm run dev          # UI dev server
+```
+
 ## Where to read what
 
 | Document | Purpose |
 |----------|---------|
+| [`docs/WIKI_PIPELINE_OPERATOR.md`](docs/WIKI_PIPELINE_OPERATOR.md) | Pipeline operator setup, CLI, MCP, watch |
 | [`docs/PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Primary handoff — problem, approach, constraints, non-goals |
 | [`docs/RESEARCH_THESIS.md`](docs/RESEARCH_THESIS.md) | Deeper running synthesis |
 | [`wiki/AGENTS.md`](wiki/AGENTS.md) | Wiki schema, naming, ingest/export workflows |

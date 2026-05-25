@@ -60,5 +60,12 @@ def mcp():
     main()
 
 
+@app.command()
+def watch(interval: int = typer.Option(60, "--interval", min=1)):
+    from pipeline.cli.watch import watch_loop
+
+    watch_loop(interval=interval)
+
+
 if __name__ == "__main__":
     app()
