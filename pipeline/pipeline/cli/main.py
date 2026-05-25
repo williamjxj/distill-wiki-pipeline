@@ -53,5 +53,12 @@ def serve(host: str = "127.0.0.1", port: int = 8787):
     uvicorn.run("pipeline.api.main:app", host=host, port=port, reload=True)
 
 
+@app.command()
+def mcp():
+    from pipeline.mcp.server import main
+
+    main()
+
+
 if __name__ == "__main__":
     app()
