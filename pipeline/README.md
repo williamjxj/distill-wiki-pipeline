@@ -99,12 +99,12 @@ Tools: `wiki_list_pending`, `wiki_read_page`, `wiki_search`, `wiki_get_status`, 
 ```bash
 # Setup (once)
 cd pipeline
-python3 -m venv .venv && source .venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -e ".[dev]"
 cd ui && npm install && cd ../..
 
 # Ensure Ollama is running with the configured model
-ollama pull deepseek-v4-flash:cloud
+ollama pull qwen2.5:7b-instruct
 
 # Run
 ./scripts/wiki-pipeline serve          # API :8787
@@ -118,7 +118,7 @@ Edit `config.yaml`:
 | Key | Default | Purpose |
 |-----|---------|---------|
 | `wiki_root` | `../wiki` | Wiki submodule path |
-| `llm.models.ollama` | `deepseek-v4-flash:cloud` | Model for ingest/export (requires Ollama cloud access) |
+| `llm.models.ollama` | `qwen2.5:7b-instruct` | Model for ingest/export (local Qwen 2.5 7B) |
 | `llm.ollama_base_url` | `http://localhost:11434` | Ollama API |
 | `server.port` | `8787` | FastAPI bind port |
 

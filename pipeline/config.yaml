@@ -4,7 +4,7 @@ llm:
   default: ollama
   ollama_base_url: http://localhost:11434
   models:
-    ollama: deepseek-v4-flash:cloud
+    ollama: qwen2.5:7b-instruct
   overrides:
     export_brief: ollama
 server:

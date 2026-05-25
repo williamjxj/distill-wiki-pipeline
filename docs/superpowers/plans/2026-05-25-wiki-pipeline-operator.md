@@ -96,7 +96,7 @@ llm:
   default: ollama
   ollama_base_url: http://localhost:11434
   models:
-    ollama: deepseek-v4-flash:cloud
+    ollama: qwen2.5:7b-instruct
   overrides:
     export_brief: ollama
 server:
@@ -110,7 +110,7 @@ Append to `.gitignore`:
 
 ```
 # Python pipeline
-pipeline/.venv/
+pipeline/venv/
 pipeline/__pycache__/
 pipeline/**/__pycache__/
 pipeline/.pytest_cache/
@@ -152,8 +152,8 @@ Run: `chmod +x scripts/wiki-pipeline`
 
 ```bash
 cd pipeline
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -e ".[dev]"
 cd ..
 ./scripts/wiki-pipeline status
@@ -225,7 +225,7 @@ def test_write_frontmatter_field_updates_status(tmp_path):
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd pipeline && source .venv/bin/activate
+cd pipeline && source venv/bin/activate
 pytest tests/test_fs.py -v
 ```
 
@@ -1179,7 +1179,7 @@ Steps:
 - [ ] **Step 3: Manual E2E with Ollama running**
 
 ```bash
-ollama pull deepseek-v4-flash:cloud   # default in pipeline/config.yaml
+ollama pull qwen2.5:7b-instruct   # default in pipeline/config.yaml
 ./scripts/wiki-pipeline serve
 cd pipeline/ui && npm run dev
 ```
@@ -1382,7 +1382,7 @@ Wire `watch` command in CLI (macOS notification via osascript; document Linux al
 
 Create `docs/WIKI_PIPELINE_OPERATOR.md` covering:
 - Prerequisites: Python 3.11, Ollama, Node 20+
-- Setup: `cd pipeline && python -m venv .venv && pip install -e ".[dev]" && cd ui && npm install`
+- Setup: `cd pipeline && python -m venv venv && pip install -e ".[dev]" && cd ui && npm install`
 - Start: `./scripts/wiki-pipeline serve` + `cd pipeline/ui && npm run dev`
 - CLI reference
 - MCP registration

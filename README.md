@@ -39,7 +39,7 @@ Both follow the same `wiki/AGENTS.md` schema and human approval gates.
 
 - Python 3.11+
 - Node.js 20+
-- [Ollama](https://ollama.com/) with `deepseek-v4-flash:cloud` (default model)
+- [Ollama](https://ollama.com/) with `qwen2.5:7b-instruct` (default model)
 
 ### Clone with submodule
 
@@ -53,11 +53,11 @@ git submodule update --init --recursive
 
 ```bash
 cd pipeline
-python3 -m venv .venv && source .venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -e ".[dev]"
 cd ui && npm install && cd ../..
 
-ollama pull deepseek-v4-flash:cloud
+ollama pull qwen2.5:7b-instruct
 ```
 
 ### Run
@@ -140,4 +140,4 @@ git commit -m "sync research synthesis"
 - **Do not gitignore `wiki/`** — it is a tracked submodule.
 - Raw files need AGENTS.md frontmatter with `status: pending` before ingest.
 - Approve exported briefs (`status: current`) before treating `docs/PROJECT_BRIEF.md` as canonical.
-- Default LLM model: `deepseek-v4-flash:cloud` via Ollama (`pipeline/config.yaml`).
+- Default LLM model: `qwen2.5:7b-instruct` via Ollama (`pipeline/config.yaml`).

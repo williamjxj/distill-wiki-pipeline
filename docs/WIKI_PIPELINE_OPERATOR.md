@@ -17,7 +17,7 @@ Ensure Ollama is running before using ingest or export in the UI:
 
 ```bash
 ollama serve
-ollama pull deepseek-v4-flash:cloud   # default model in pipeline/config.yaml
+ollama pull qwen2.5:7b-instruct   # default model in pipeline/config.yaml
 ```
 
 ## Setup
@@ -26,8 +26,8 @@ From the repo root:
 
 ```bash
 cd pipeline
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -e ".[dev]"
 
 cd ui
@@ -106,7 +106,7 @@ Add to Cursor (`.cursor/mcp.json`) or Claude Desktop config. Adjust paths to you
 {
   "mcpServers": {
     "wiki-pipeline": {
-      "command": "/path/to/experimental-app/pipeline/.venv/bin/python",
+      "command": "/path/to/experimental-app/pipeline/venv/bin/python",
       "args": ["-m", "pipeline.mcp.server"],
       "cwd": "/path/to/experimental-app/pipeline"
     }
@@ -135,16 +135,16 @@ Run lint on a schedule and append JSON results to a log:
 0 9 * * * /path/to/experimental-app/scripts/wiki-pipeline lint --json >> /tmp/wiki-lint.log 2>&1
 ```
 
-Use absolute paths in cron. Activate is not required if the shebang script invokes the venv Python, or point cron at `pipeline/.venv/bin/python -m pipeline.cli.main lint --json`.
+Use absolute paths in cron. Activate is not required if the shebang script invokes the venv Python, or point cron at `pipeline/venv/bin/python -m pipeline.cli.main lint --json`.
 
 ## Configuration
 
 Edit `pipeline/config.yaml` for wiki paths, Ollama URL, model names, and server host/port. Defaults assume the wiki submodule at `../wiki` relative to `pipeline/`.
 
-Default model is `deepseek-v4-flash:cloud` (Ollama cloud — requires an [Ollama subscription](https://ollama.com/upgrade) for cloud models). Override at runtime for local models:
+Default model is `qwen2.5:7b-instruct` (local). Override at runtime via environment variable:
 
 ```bash
-PIPELINE_OLLAMA_MODEL=qwen2.5:7b-instruct ./scripts/wiki-pipeline serve
+PIPELINE_OLLAMA_MODEL=deepseek-v4-flash:cloud ./scripts/wiki-pipeline serve
 ```
 
 ## Related docs
