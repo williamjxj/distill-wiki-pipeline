@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "wiki-pipeline": {
+      "command": "~/my-tests/experimental-app/pipeline/venv/bin/python",
+      "args": ["-m", "pipeline.mcp.server"],
+      "cwd": "~/my-tests/experimental-app/pipeline"
+    }
+  }
+}
