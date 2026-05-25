@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getPendingRaw, type PendingRawItem } from "../api";
 import styles from "./RawQueue.module.css";
 
@@ -54,7 +55,15 @@ export default function RawQueue() {
       <ul className={styles.list}>
         {items.map((item) => (
           <li key={item.path} className={styles.item}>
-            <span className={styles.path}>{item.path}</span>
+            <div className={styles.row}>
+              <span className={styles.path}>{item.path}</span>
+              <Link
+                to={`/ingest?path=${encodeURIComponent(item.path)}`}
+                className={styles.ingestLink}
+              >
+                Ingest
+              </Link>
+            </div>
             <span className={styles.meta}>
               {formatMeta(item.meta)}
             </span>

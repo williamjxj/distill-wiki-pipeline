@@ -1,5 +1,6 @@
 import { NavLink, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
+import IngestWizard from "./pages/IngestWizard";
 import LogViewer from "./pages/LogViewer";
 import RawQueue from "./pages/RawQueue";
 import styles from "./App.module.css";
@@ -27,6 +28,14 @@ export default function App() {
           Raw Queue
         </NavLink>
         <NavLink
+          to="/ingest"
+          className={({ isActive }) =>
+            isActive ? `${styles.link} ${styles.active}` : styles.link
+          }
+        >
+          Ingest
+        </NavLink>
+        <NavLink
           to="/log"
           className={({ isActive }) =>
             isActive ? `${styles.link} ${styles.active}` : styles.link
@@ -40,6 +49,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/raw" element={<RawQueue />} />
+          <Route path="/ingest" element={<IngestWizard />} />
           <Route path="/log" element={<LogViewer />} />
         </Routes>
       </main>

@@ -68,3 +68,54 @@ export function postSync(briefOnly: boolean): Promise<SyncResult> {
     body: JSON.stringify({ brief_only: briefOnly }),
   });
 }
+
+export interface IngestDraftPayload {
+  source_md?: string;
+  concept_updates?: Record<string, string>;
+  thesis_delta?: string;
+  index_lines?: string[];
+  log_entry?: string;
+}
+
+export interface IngestJob {
+  id: string;
+  state: string;
+  raw_path: string;
+  analysis: string | null;
+  draft: string | null;
+  draft_payload: IngestDraftPayload | null;
+  error: string | null;
+}
+
+function postJson<T>(path: string, body?: unknown): Promise<T> {
+  return fetchJson<T>(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+}
+
+export function startIngest(rawPath: string): Promise<IngestJob> {
+  return postJson<IngestJob>("/api/jobs/ingest", { raw_path: rawPath });
+}
+
+export function approveAnalysis(jobId: string): Promise<IngestJob> {
+  return postJson<IngestJob>(`/api/jobs/ingest/${jobId}/approve-analysis`);
+}
+
+export function approveDraft(
+  jobId: string,
+  edits?: IngestDraftPayload,
+): Promise<IngestJob> {
+  return postJson<IngestJob>(`/api/jobs/ingest/${jobId}/approve-draft`, {
+    edits: edits ?? undefined,
+  });
+}
+
+export function confirmIngest(jobId: string): Promise<IngestJob> {
+  return postJson<IngestJob>(`/api/jobs/ingest/${jobId}/confirm`);
+}
+
+export function getJob(jobId: string): Promise<IngestJob> {
+  return fetchJson<IngestJob>(`/api/jobs/ingest/${jobId}`);
+}

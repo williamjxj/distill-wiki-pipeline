@@ -24,11 +24,30 @@
   background: var(--surface);
 }
 
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
 .path {
-  display: block;
   font-family: var(--mono);
   font-size: 0.875rem;
-  margin-bottom: 0.25rem;
+  word-break: break-word;
+}
+
+.ingestLink {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.ingestLink:hover {
+  text-decoration: underline;
 }
 
 .meta {
