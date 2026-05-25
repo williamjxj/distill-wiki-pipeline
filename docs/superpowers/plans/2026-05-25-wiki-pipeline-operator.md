@@ -96,7 +96,7 @@ llm:
   default: ollama
   ollama_base_url: http://localhost:11434
   models:
-    ollama: llama3.1:8b
+    ollama: deepseek-v4-flash:cloud
   overrides:
     export_brief: ollama
 server:
@@ -1179,7 +1179,7 @@ Steps:
 - [ ] **Step 3: Manual E2E with Ollama running**
 
 ```bash
-ollama pull llama3.1:8b   # or configured model
+ollama pull deepseek-v4-flash:cloud   # default in pipeline/config.yaml
 ./scripts/wiki-pipeline serve
 cd pipeline/ui && npm run dev
 ```

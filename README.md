@@ -1,27 +1,45 @@
 # Experimental App
 
-A testbed for the **LLM-Wiki research pipeline** — collect multi-LLM research, distill it into a compounding wiki, and sync synthesis into this repo for agentic development (Cursor, Claude Code, etc.).
+A testbed for the **LLM-Wiki research pipeline** — collect multi-LLM research, distill it into a compounding wiki, and sync synthesis into this repo for agentic development.
 
-Based on [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). See [`wiki/README.md`](wiki/README.md) for full wiki documentation.
+Based on [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). See [`wiki/README.md`](wiki/README.md) for wiki submodule documentation.
 
 ## What this repo is
 
 ```
 experimental-app/
 ├── docs/
-│   ├── PROJECT_BRIEF.md      # synced synthesis for brainstorming / planning / implementation
-│   └── RESEARCH_THESIS.md    # optional; running research view
+│   ├── PROJECT_BRIEF.md              # synced synthesis for dev handoff
+│   ├── RESEARCH_THESIS.md            # optional running research view
+│   └── WIKI_PIPELINE_OPERATOR.md     # operator setup, CLI, MCP
+├── pipeline/                         # wiki pipeline operator (CLI + API + UI + MCP)
 ├── scripts/
-│   └── sync-wiki-docs.sh     # copy wiki exports → docs/
-├── wiki/                     # project-wiki git submodule (research knowledge base)
-└── src/                      # application code (future)
+│   ├── sync-wiki-docs.sh             # copy wiki exports → docs/
+│   └── wiki-pipeline                 # pipeline CLI entrypoint
+├── wiki/                             # project-wiki git submodule
+└── src/                              # application code (future)
 ```
 
 **North-star:** can a coding agent implement correctly from the exported context?
 
 Research and building run in parallel — ingest, lint, and re-export as the project evolves. This is not a one-time handoff.
 
-## Quick start
+## Two ways to operate the pipeline
+
+| Mode | When to use |
+|------|-------------|
+| **Wiki Pipeline Operator** (recommended) | Local web UI + CLI — ingest, lint, export, sync without Cursor |
+| **Cursor skills** (optional) | `/wiki-ingest`, `/wiki-lint`, `/wiki-export-brief` in the wiki submodule |
+
+Both follow the same `wiki/AGENTS.md` schema and human approval gates.
+
+## Quick start — Wiki Pipeline Operator
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 20+
+- [Ollama](https://ollama.com/) with `deepseek-v4-flash:cloud` (default model)
 
 ### Clone with submodule
 
@@ -31,59 +49,82 @@ git clone --recurse-submodules <repo-url>
 git submodule update --init --recursive
 ```
 
-### Research loop (in `wiki/`)
+### Setup
 
-1. **Collect** — paste LLM chats into `wiki/raw/llm/` (kebab-case names, AGENTS.md frontmatter)
-2. **Ingest** — `/wiki-ingest` one file at a time (Cursor skill in `wiki/.cursor/skills/`)
+```bash
+cd pipeline
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+cd ui && npm install && cd ../..
+
+ollama pull deepseek-v4-flash:cloud
+```
+
+### Run
+
+```bash
+# Terminal 1 — API (localhost:8787)
+./scripts/wiki-pipeline serve
+
+# Terminal 2 — UI (localhost:5173)
+cd pipeline/ui && npm run dev
+```
+
+Open the UI for dashboard, ingest wizard, export, lint, graph, and sync.
+
+See [`pipeline/README.md`](pipeline/README.md) for workflow details and [`docs/WIKI_PIPELINE_OPERATOR.md`](docs/WIKI_PIPELINE_OPERATOR.md) for full operator docs.
+
+### CLI essentials
+
+```bash
+./scripts/wiki-pipeline status
+./scripts/wiki-pipeline lint
+./scripts/wiki-pipeline sync
+./scripts/wiki-pipeline mcp      # MCP sidecar for external agents
+./scripts/wiki-pipeline watch    # notify on pending raw files
+```
+
+## Research loop (Cursor skills alternative)
+
+In `wiki/` with Cursor:
+
+1. **Collect** — paste LLM chats into `wiki/raw/llm/` (AGENTS.md frontmatter)
+2. **Ingest** — `/wiki-ingest` one file at a time
 3. **Lint** — `/wiki-lint` after every 3–5 ingests
-4. **Export** — `/wiki-export-brief` when ready for dev handoff
-5. **Sync** — copy exports into this repo (see below)
-6. **Build** — use `docs/PROJECT_BRIEF.md` with brainstorming, planning, and implementation skills
+4. **Export** — `/wiki-export-brief`
+5. **Sync** — `./scripts/sync-wiki-docs.sh`
+6. **Build** — use `docs/PROJECT_BRIEF.md` for planning and implementation
 
-### Sync wiki → docs
+## Sync wiki → docs
 
-After exporting (or updating) synthesis in the wiki submodule:
+After exporting synthesis in the wiki submodule:
 
 ```bash
 ./scripts/sync-wiki-docs.sh              # PROJECT_BRIEF + RESEARCH_THESIS
 ./scripts/sync-wiki-docs.sh --brief-only # PROJECT_BRIEF only
 ```
 
-Then commit both repos:
+Or use **Sync** in the pipeline UI / `./scripts/wiki-pipeline sync`.
+
+Commit both repos after syncing:
 
 ```bash
-# wiki submodule first
 cd wiki && git add -A && git commit -m "export brief cycle N" && cd ..
-
-# parent repo
 git add docs/ wiki
 git commit -m "sync research synthesis"
-```
-
-## Wiki Pipeline Operator
-
-For a local web UI and CLI to ingest, lint, export, and sync without Cursor:
-
-- **Operator guide:** [`docs/WIKI_PIPELINE_OPERATOR.md`](docs/WIKI_PIPELINE_OPERATOR.md) — setup, CLI, MCP, cron
-- **Design spec:** [`docs/superpowers/specs/2026-05-25-wiki-pipeline-operator-design.md`](docs/superpowers/specs/2026-05-25-wiki-pipeline-operator-design.md)
-
-Quick start after setup (see operator guide):
-
-```bash
-./scripts/wiki-pipeline serve          # API on localhost:8787
-cd pipeline/ui && npm run dev          # UI dev server
 ```
 
 ## Where to read what
 
 | Document | Purpose |
 |----------|---------|
-| [`docs/WIKI_PIPELINE_OPERATOR.md`](docs/WIKI_PIPELINE_OPERATOR.md) | Pipeline operator setup, CLI, MCP, watch |
-| [`docs/PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Primary handoff — problem, approach, constraints, non-goals |
-| [`docs/RESEARCH_THESIS.md`](docs/RESEARCH_THESIS.md) | Deeper running synthesis |
-| [`wiki/AGENTS.md`](wiki/AGENTS.md) | Wiki schema, naming, ingest/export workflows |
+| [`pipeline/README.md`](pipeline/README.md) | Pipeline workflow and architecture |
+| [`docs/WIKI_PIPELINE_OPERATOR.md`](docs/WIKI_PIPELINE_OPERATOR.md) | Operator setup, CLI, MCP, cron |
+| [`docs/superpowers/specs/2026-05-25-wiki-pipeline-operator-design.md`](docs/superpowers/specs/2026-05-25-wiki-pipeline-operator-design.md) | Design spec |
+| [`docs/PROJECT_BRIEF.md`](docs/PROJECT_BRIEF.md) | Primary dev handoff |
+| [`docs/RESEARCH_THESIS.md`](docs/RESEARCH_THESIS.md) | Running synthesis |
+| [`wiki/AGENTS.md`](wiki/AGENTS.md) | Wiki schema and workflows |
 | [`wiki/wiki/index.md`](wiki/wiki/index.md) | Catalog of sources and concepts |
-| [`wiki/README.md`](wiki/README.md) | Submodule setup, Obsidian, skills, maintenance |
 
 ## Cursor skills (wiki submodule)
 
@@ -96,6 +137,7 @@ cd pipeline/ui && npm run dev          # UI dev server
 
 ## Notes
 
-- **Do not gitignore `wiki/`** in this repo — it is a tracked submodule.
-- Raw LLM exports live in `wiki/raw/llm/`; rename to kebab-case **before** ingest.
-- Approve exported briefs in the wiki (`status: current`) before treating `docs/PROJECT_BRIEF.md` as canonical.
+- **Do not gitignore `wiki/`** — it is a tracked submodule.
+- Raw files need AGENTS.md frontmatter with `status: pending` before ingest.
+- Approve exported briefs (`status: current`) before treating `docs/PROJECT_BRIEF.md` as canonical.
+- Default LLM model: `deepseek-v4-flash:cloud` via Ollama (`pipeline/config.yaml`).

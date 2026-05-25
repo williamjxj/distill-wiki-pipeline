@@ -30,6 +30,58 @@ def slug_from_raw_path(raw_path: str) -> str:
     return Path(raw_path).stem
 
 
+def normalize_draft_payload(payload: dict, raw_path: str, raw_meta: dict) -> dict:
+    """Coerce common LLM draft shapes into the schema apply_writes expects."""
+    slug = slug_from_raw_path(raw_path)
+    normalized = dict(payload)
+
+    source_md = normalized.get("source_md")
+    if isinstance(source_md, dict):
+        fm = source_md
+        normalized["source_md"] = (
+            "---\n"
+            f"type: source-summary\n"
+            f"raw: {raw_path}\n"
+            f"source: {fm.get('source', raw_meta.get('source', 'claude'))}\n"
+            f"date: {fm.get('date', raw_meta.get('date', ''))}\n"
+            "---\n\n"
+            f"# {fm.get('topic', slug)}\n\n"
+            "## Key Claims\n\n"
+            "(See raw source — draft normalization applied.)\n"
+        )
+    elif not isinstance(source_md, str) or not source_md.strip():
+        normalized["source_md"] = (
+            "---\n"
+            f"type: source-summary\n"
+            f"raw: {raw_path}\n"
+            f"source: {raw_meta.get('source', 'claude')}\n"
+            f"date: {raw_meta.get('date', '')}\n"
+            "---\n\n"
+            f"# {raw_meta.get('topic', slug)}\n"
+        )
+
+    log_entry = normalized.get("log_entry")
+    if isinstance(log_entry, dict):
+        date_str = log_entry.get("date", raw_meta.get("date", ""))
+        slug_ref = log_entry.get("slug", slug)
+        summary = log_entry.get("summary", "Ingest completed.")
+        normalized["log_entry"] = f"## [{date_str}] ingest | {slug_ref}\n\n{summary}"
+
+    concept_updates = normalized.get("concept_updates")
+    if isinstance(concept_updates, dict):
+        fixed: dict[str, str] = {}
+        for key, value in concept_updates.items():
+            if isinstance(value, str):
+                fixed[key] = value
+            elif isinstance(value, dict):
+                title = value.get("title", key.replace("-", " ").title())
+                body = value.get("body", json.dumps(value, indent=2))
+                fixed[key] = f"# {title}\n\n{body}"
+        normalized["concept_updates"] = fixed
+
+    return normalized
+
+
 def _json_prompt(data: dict) -> str:
     def _default(value: object) -> str:
         if isinstance(value, (date, datetime)):
@@ -79,7 +131,7 @@ async def run_draft(job: IngestJob, paths: WikiPaths | None = None) -> None:
         f"Approved analysis:\n{job.analysis}"
     )
     job.draft = await complete_ollama(INGEST_WRITE_SYSTEM, prompt, task="ingest")
-    job.draft_payload = extract_json(job.draft)
+    job.draft_payload = normalize_draft_payload(extract_json(job.draft), job.raw_path, job.raw_meta or {})
     job.state = JobState.DRAFT_DONE
 
 

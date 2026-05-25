@@ -148,7 +148,7 @@ llm:
   default: ollama
   ollama_base_url: http://localhost:11434
   models:
-    ollama: llama3.1:8b     # user-configurable
+    ollama: deepseek-v4-flash:cloud   # user-configurable
   overrides:
     export_brief: ollama    # set to anthropic/openai if local quality insufficient
 

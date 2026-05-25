@@ -17,7 +17,7 @@ Ensure Ollama is running before using ingest or export in the UI:
 
 ```bash
 ollama serve
-ollama pull llama3.1:8b   # or your model from pipeline/config.yaml
+ollama pull deepseek-v4-flash:cloud   # default model in pipeline/config.yaml
 ```
 
 ## Setup
@@ -140,6 +140,12 @@ Use absolute paths in cron. Activate is not required if the shebang script invok
 ## Configuration
 
 Edit `pipeline/config.yaml` for wiki paths, Ollama URL, model names, and server host/port. Defaults assume the wiki submodule at `../wiki` relative to `pipeline/`.
+
+Default model is `deepseek-v4-flash:cloud` (Ollama cloud — requires an [Ollama subscription](https://ollama.com/upgrade) for cloud models). Override at runtime for local models:
+
+```bash
+PIPELINE_OLLAMA_MODEL=qwen2.5:7b-instruct ./scripts/wiki-pipeline serve
+```
 
 ## Related docs
 

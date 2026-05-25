@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import httpx
 
 from pipeline.wiki_core.paths import load_config
@@ -8,7 +10,7 @@ from pipeline.wiki_core.paths import load_config
 async def complete_ollama(system: str, user: str, task: str = "ingest") -> str:
     cfg = load_config()
     base = cfg["llm"]["ollama_base_url"].rstrip("/")
-    model = cfg["llm"]["models"]["ollama"]
+    model = os.environ.get("PIPELINE_OLLAMA_MODEL") or cfg["llm"]["models"]["ollama"]
     override = cfg["llm"].get("overrides", {}).get(task)
     if override and override != "ollama":
         raise NotImplementedError(f"Provider {override} not implemented yet")
