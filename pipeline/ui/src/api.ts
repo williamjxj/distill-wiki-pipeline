@@ -119,3 +119,30 @@ export function confirmIngest(jobId: string): Promise<IngestJob> {
 export function getJob(jobId: string): Promise<IngestJob> {
   return fetchJson<IngestJob>(`/api/jobs/ingest/${jobId}`);
 }
+
+export interface ExportJob {
+  id: string;
+  state: string;
+  forced: boolean;
+  lint_findings: LintFinding[];
+  draft_body: string | null;
+  draft_meta: Record<string, unknown> | null;
+  export_cycle: number | null;
+  sources_ingested: number | null;
+  prior_brief: string | null;
+  prior_brief_status: string | null;
+  prior_export_cycle: number | null;
+  error: string | null;
+}
+
+export function startExport(force = false): Promise<ExportJob> {
+  return postJson<ExportJob>("/api/jobs/export", { force });
+}
+
+export function approveExport(jobId: string): Promise<ExportJob> {
+  return postJson<ExportJob>(`/api/jobs/export/${jobId}/approve`);
+}
+
+export function getExportJob(jobId: string): Promise<ExportJob> {
+  return fetchJson<ExportJob>(`/api/jobs/export/${jobId}`);
+}

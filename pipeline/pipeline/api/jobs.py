@@ -5,6 +5,14 @@ from enum import Enum
 from uuid import uuid4
 
 
+class ExportJobState(str, Enum):
+    CREATED = "created"
+    LINT_BLOCKED = "lint_blocked"
+    DRAFT_DONE = "draft_done"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class JobState(str, Enum):
     CREATED = "created"
     ANALYSIS_DONE = "analysis_done"
@@ -30,9 +38,26 @@ class IngestJob:
     raw_body: str = ""
 
 
+@dataclass
+class ExportJob:
+    id: str
+    state: ExportJobState = ExportJobState.CREATED
+    forced: bool = False
+    lint_findings: list[dict] = field(default_factory=list)
+    draft_body: str | None = None
+    draft_meta: dict | None = None
+    export_cycle: int | None = None
+    sources_ingested: int | None = None
+    prior_brief: str | None = None
+    prior_brief_status: str | None = None
+    prior_export_cycle: int | None = None
+    error: str | None = None
+
+
 class JobStore:
     def __init__(self) -> None:
         self._jobs: dict[str, IngestJob] = {}
+        self._export_jobs: dict[str, ExportJob] = {}
 
     def get(self, job_id: str) -> IngestJob | None:
         return self._jobs.get(job_id)
@@ -54,8 +79,30 @@ class JobStore:
         job.state = JobState.FAILED
         job.error = message
 
+    def get_export(self, job_id: str) -> ExportJob | None:
+        return self._export_jobs.get(job_id)
+
+    def active_export(self) -> ExportJob | None:
+        terminal = {ExportJobState.COMPLETED, ExportJobState.FAILED, ExportJobState.LINT_BLOCKED}
+        for job in self._export_jobs.values():
+            if job.state not in terminal:
+                return job
+        return None
+
+    def create_export(self, force: bool = False) -> ExportJob:
+        if self.active_export() is not None:
+            raise ValueError("An export job is already active")
+        job = ExportJob(id=str(uuid4()), forced=force)
+        self._export_jobs[job.id] = job
+        return job
+
+    def mark_export_failed(self, job: ExportJob, message: str) -> None:
+        job.state = ExportJobState.FAILED
+        job.error = message
+
     def clear(self) -> None:
         self._jobs.clear()
+        self._export_jobs.clear()
 
 
 store = JobStore()
