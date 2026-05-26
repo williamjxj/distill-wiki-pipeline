@@ -31,3 +31,4 @@ pipeline/ui/node_modules/
 pipeline/ui/dist/
 *.egg-info/
 .sisyphus/
+.codegraph/

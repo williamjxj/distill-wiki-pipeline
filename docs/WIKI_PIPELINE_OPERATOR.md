@@ -101,6 +101,7 @@ On macOS, notifications use `osascript`. On Linux and other platforms, messages 
 | `serve [--host HOST] [--port PORT]` | Start FastAPI + hot reload (default `127.0.0.1:8787`) |
 | `mcp` | Start MCP stdio server |
 | `watch [--interval SECONDS]` | Poll for pending raw files; notify on change (min interval 1s) |
+| `auto --file PATH \| --all \| --watch` | Run full pipeline with pre-approval — see below |
 
 Examples (from `pipeline/` directory, venv active):
 
@@ -195,6 +196,50 @@ which wiki-pipeline          # should show something in your PATH
 
 The MCP server is intentionally **read-heavy**. Ingest and export require human approval in the web UI and are not exposed as MCP tools. Use the dashboard at `http://localhost:5173` for those workflows.
 
+## Auto pipeline (pre-approved)
+
+Run the full pipeline end-to-end with no human gates. Designed for the "drop a file and walk away" workflow.
+
+### Pipeline stages
+
+```
+raw file → [auto frontmatter] → ingest → lint → [if no pending] export → lint → graph → sync
+```
+
+### Modes
+
+```bash
+# Process a single raw file (path from repo root or wiki root)
+wiki-pipeline auto --file ./wiki/raw/llm/chat-export.md
+
+# Process ALL pending raw files in batch
+wiki-pipeline auto --all
+
+# Watch for new files and process them as they appear
+wiki-pipeline auto --watch
+wiki-pipeline auto --watch --interval 30   # poll every 30s
+```
+
+### How it works
+
+- **Auto frontmatter** — before ingest, the pipeline checks if the raw file has YAML frontmatter. If missing, it derives sensible defaults:
+  - `source`/`type` from the directory (`raw/llm/` → `llm`, `llm-chat`; `raw/web/` → `web`, `web-clip`)
+  - `topic` from the first `# H1` heading, or falls back to the filename
+  - `date` from today, `status` set to `pending`
+  - The file is updated in place before ingest proceeds
+- **Ingest** runs both LLM passes (analysis → draft) and writes wiki files — skipping the three approval gates the web UI requires
+- **Export** runs only after **all** pending raw files are ingested, so the project brief captures the complete picture
+- **Lint**, **graph**, and **sync** run deterministically after each stage
+- **Error resilience** — if an LLM call returns bad JSON or any step fails for a single file, that file is marked `failed` and the batch continues with the next one. The pipeline never crashes on individual file errors.
+- Exit criteria: brief synced to `docs/` with `status: current`, raw files marked `ingested`
+
+### Constraints
+
+- Ollama must be running (`ollama serve`) — the auto pipeline calls LLMs
+- One ingest at a time (the underlying `run_analysis` / `run_draft` functions are serial per file)
+- The `--watch` mode polls on a timer (no filesystem event watching) — default 60s
+- Export is skipped if any pending raw files remain (they'd be missing from the brief)
+
 ## Scheduled tasks (cron)
 
 Cron runs with a minimal `PATH` — always use absolute paths to the venv Python or the installed entrypoint.
@@ -223,6 +268,14 @@ Synchronize the brief to parent `docs/` every 6 hours:
 0 */6 * * * /path/to/pipeline/venv/bin/wiki-pipeline sync --brief-only >> /tmp/wiki-sync.log 2>&1
 ```
 
+### Auto-pipeline (pre-approved)
+
+Process all pending files and run the full pipeline on a schedule:
+
+```cron
+0 3 * * * /path/to/pipeline/venv/bin/wiki-pipeline auto --all >> /tmp/wiki-auto.log 2>&1
+```
+
 ### Combined pattern (shell script for multiple steps)
 
 For multi-step cron jobs, create a wrapper script:
@@ -246,7 +299,7 @@ Then in crontab:
 
 **Constraints for cron:**
 - Ollama must be running (`ollama serve`) for any LLM-dependent operation
-- Ingest and export workflows require the web UI (human approval gates) — cron cannot automate those
+- Use `auto --all` for cron — it bypasses the web UI approval gates
 - All paths must be absolute — cron has no knowledge of your project structure
 
 ## Configuration

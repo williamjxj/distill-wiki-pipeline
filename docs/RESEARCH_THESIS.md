@@ -77,3 +77,22 @@ Source 5 ([[distill-ingest]]) is a meta-document: it provides the rigorous disti
 
 - **Live Memory Layer**: Emphasize the integration of MCP server tools to make MemWeaver a live memory layer for IDEs, enhancing real-time access to relevant information (Concept: `mcp-server`).
 - **Multi-LLM Workflow**: Highlight the importance of distilling insights from multiple LLMs into canonical files before ingestion (Concept: `distill-canonical` and `multi-llm-workflow`).
+
+- **Context Handling Divergence**:
+  - Web: Infinite, uncontrolled context accumulation.
+  - API: Controlled, customizable context management (Details in [[llm-web-api-context-token-management]]).
+
+- **Token Management**: Developers can set `max_tokens` and manage context through various intelligent techniques like summarization and data pruning (Further discussed in [[llm-web-api-context-token-management]])
+
+Current Understanding:
+- The analysis of `web/doubao.md` highlights the differences in context management between web dialogues and API calls, emphasizing the advantages of API calls for developers.
+
+Open Questions:
+- How can we effectively manage resources while maintaining user experience on both platforms?
+
+Emerging Decisions:
+- Continue exploring advanced memory management techniques for better resource utilization.
+
+- **Current Understanding**: Emphasize the importance of distillation over raw log collection when dealing with complex or long-lived topics. Highlight that different LLMs offer unique insights which can be triangulated for more robust decisions.
+- **Open Questions**: Explore how to streamline the multi-source collection and distillation process further, especially in real-world applications.
+- **Emerging Decisions**: Recommend implementing an MCP server as part of the prompt harness to enhance MemWeaver's live memory layer functionality.

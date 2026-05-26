@@ -1,6 +1,11 @@
 from __future__ import annotations
+
+import asyncio
 import json
+from pathlib import Path
+
 import typer
+
 from pipeline.wiki_core.lint import run_lint
 from pipeline.wiki_core.paths import resolve_paths
 from pipeline.wiki_core.status import get_pipeline_status
@@ -65,6 +70,60 @@ def watch(interval: int = typer.Option(60, "--interval", min=1)):
     from pipeline.cli.watch import watch_loop
 
     watch_loop(interval=interval)
+
+
+@app.command()
+def auto(
+    file_path: str | None = typer.Option(None, "--file", "-f", help="Process a specific raw file (relative to wiki root)"),
+    all_pending: bool = typer.Option(False, "--all", "-a", help="Process all pending raw files"),
+    watch: bool = typer.Option(False, "--watch", "-w", help="Watch for new pending files and process automatically"),
+    interval: int = typer.Option(60, "--interval", "-i", min=1, help="Poll interval in seconds (--watch only)"),
+):
+    """Run the full pipeline (ingest → lint → export → lint → graph → sync)
+    with pre-approval — no human gates, no web UI required."""
+    from pipeline.workflows.auto import process_all_pending, run_pipeline, watch_loop
+
+    if watch:
+        asyncio.run(watch_loop(interval=interval))
+    elif file_path:
+        rel = _resolve_raw_arg(file_path)
+        asyncio.run(run_pipeline(rel))
+    elif all_pending:
+        asyncio.run(process_all_pending())
+    else:
+        typer.echo("Specify --file, --all, or --watch. See --help for details.")
+        raise typer.Exit(code=1)
+
+
+def _resolve_raw_arg(raw_arg: str) -> str:
+    """Normalise a user-supplied ``--file`` value to a wiki-root-relative path.
+
+    The ``scripts/wiki-pipeline`` wrapper chdirs to ``pipeline/`` before
+    invoking Python, so a path that was correct at the shell  (e.g.
+    ``./wiki/raw/llm/chat.md`` from the repo root) won't resolve from the new
+    CWD.  This function tries the path as-is first, then prepends ``../``,
+    then raises.
+    """
+    from pipeline.wiki_core.paths import resolve_paths
+
+    paths = resolve_paths()
+    wiki_root = paths.wiki_root.resolve()
+
+    for candidate in (Path(raw_arg), Path("..") / raw_arg):
+        abs_path = candidate.resolve()
+        if abs_path.is_file():
+            try:
+                return str(abs_path.relative_to(wiki_root))
+            except ValueError:
+                typer.echo(
+                    f"Error: {raw_arg} resolves to {abs_path} which is outside"
+                    f" wiki root ({wiki_root})",
+                    err=True,
+                )
+                raise typer.Exit(code=1)
+
+    typer.echo(f"Error: file not found: {raw_arg}", err=True)
+    raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":

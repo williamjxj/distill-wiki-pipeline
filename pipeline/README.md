@@ -12,6 +12,7 @@ pipeline/
 ├── pipeline/
 │   ├── wiki_core/           # shared library — paths, fs, lint, status, sync, graph
 │   ├── llm/                 # Ollama router + ingest/export workflows
+│   ├── workflows/           # auto pipeline orchestration (pre-approved)
 │   ├── api/                 # FastAPI HTTP + job orchestration
 │   ├── mcp/                 # MCP stdio sidecar (same wiki_core)
 │   └── cli/                 # Typer CLI
@@ -36,7 +37,7 @@ flowchart LR
 
 ### 1. Collect
 
-Add LLM chat exports to `wiki/raw/llm/` (or web clips to `wiki/raw/web/`) with AGENTS.md frontmatter and `status: pending`.
+Drop markdown files into `wiki/raw/llm/` or `wiki/raw/web/`. The auto pipeline will inject missing frontmatter (status, source, topic, date) automatically — no YAML required.
 
 Upload via the UI **Raw Queue** form or paste files manually.
 
@@ -52,17 +53,19 @@ One raw file per job, two LLM passes with approval between stages:
 | Review | Operator approves draft (optional edits) |
 | Confirm | Writes wiki files; sets raw `status: ingested` |
 
-**CLI:** `./scripts/wiki-pipeline serve` + UI at `/ingest`
+**CLI:** `wiki-pipeline serve` (from `pipeline/` with venv active) + UI at `/ingest`
 
 **API:** `POST /api/jobs/ingest` → approve-analysis → approve-draft → confirm
+
+**Auto (pre-approved):** `wiki-pipeline auto --file <path>` — see [auto pipeline](#7-auto-pipeline-pre-approved) below
 
 ### 3. Lint
 
 Deterministic checks (no LLM): pending raw, missing wikilinks, orphan pages, index sync.
 
 ```bash
-./scripts/wiki-pipeline lint
-./scripts/wiki-pipeline lint --json
+wiki-pipeline lint
+wiki-pipeline lint --json
 ```
 
 UI: **Lint** page (`/lint`)
@@ -78,8 +81,8 @@ UI: **Export** page (`/export`)
 Copy synthesis into parent `docs/`:
 
 ```bash
-./scripts/wiki-pipeline sync
-./scripts/wiki-pipeline sync --brief-only
+wiki-pipeline sync
+wiki-pipeline sync --brief-only
 ```
 
 Warns if brief is still `status: draft`.
@@ -89,10 +92,37 @@ Warns if brief is still `status: draft`.
 Expose read-heavy tools to Cursor / Claude Desktop without opening the UI:
 
 ```bash
-./scripts/wiki-pipeline mcp
+wiki-pipeline mcp
 ```
 
 Tools: `wiki_list_pending`, `wiki_read_page`, `wiki_search`, `wiki_get_status`, `wiki_run_lint`, `wiki_sync_brief`
+
+MCP is **read-heavy** — ingest and export still require the web UI or the [auto pipeline](#7-auto-pipeline-pre-approved).
+
+### 7. Auto pipeline (pre-approved)
+
+Run the full pipeline without any human gates — drop a file and walk away:
+
+```bash
+# Process one file
+wiki-pipeline auto --file wiki/raw/llm/chat-export.md
+
+# Process all pending files
+wiki-pipeline auto --all
+
+# Watch for new files and process them as they appear
+wiki-pipeline auto --watch
+```
+
+The auto pipeline chains: **ingest → lint → export → lint → graph → sync**.
+
+**Key features:**
+
+- **Zero frontmatter required** — files dumped into `raw/` without YAML frontmatter get it auto-injected. The pipeline derives `source`/`type` from the directory (`raw/llm/` vs `raw/web/`), `topic` from the first H1 heading, and `date` from today.
+- **Error resilient** — if an LLM call fails (e.g. Ollama returns bad JSON), that file is marked failed and the batch continues to the next file. The pipeline doesn't crash on a single bad response.
+- **Export deferred** — export runs only after all pending raw files are ingested, so the project brief captures the complete picture.
+
+See [`docs/WIKI_PIPELINE_OPERATOR.md`](../docs/WIKI_PIPELINE_OPERATOR.md) for full details.
 
 ## Quick start
 
@@ -106,9 +136,12 @@ cd ui && npm install && cd ../..
 # Ensure Ollama is running with the configured model
 ollama pull qwen2.5:7b-instruct
 
-# Run
-./scripts/wiki-pipeline serve          # API :8787
+# Run (venv active)
+wiki-pipeline serve                    # API :8787
 cd pipeline/ui && npm run dev          # UI :5173
+
+# Or auto-pipeline (no UI needed)
+wiki-pipeline auto --all               # process everything pending
 ```
 
 ## Configuration
@@ -132,5 +165,6 @@ Edit `config.yaml`:
 | `serve` | Start FastAPI server |
 | `mcp` | Start MCP stdio server |
 | `watch [--interval N]` | Notify when pending raw files exist |
+| `auto --file PATH \| --all \| --watch` | Run full pipeline with pre-approval |
 
-Entry point from repo root: `./scripts/wiki-pipeline`
+Entry point: `wiki-pipeline` (installed via `pip install -e .` in venv).
