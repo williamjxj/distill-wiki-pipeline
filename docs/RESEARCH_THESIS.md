@@ -2,7 +2,7 @@
 type: synthesis
 status: evolving
 last_updated: 2026-05-24
-sources_ingested: 3
+sources_ingested: 4
 ---
 
 # Evolving Thesis
@@ -11,7 +11,7 @@ sources_ingested: 3
 
 ## Current Understanding
 
-This project implements Karpathy's **LLM-Wiki pattern** ([[wiki-vs-context-engine]]) as a multi-LLM research → distillation → dev-tool handoff pipeline. All three sources validate the core idea; ChatGPT's "context engine" reframe is product naming, not a different architecture.
+This project implements Karpathy's **LLM-Wiki pattern** ([[wiki-vs-context-engine]]) as a multi-LLM research → distillation → dev-tool handoff pipeline. All four sources validate the core idea; ChatGPT's "context engine" reframe is product naming, not a different architecture.
 
 **Problem:** [[context-fragmentation]] — scattered, duplicated, contradictory research across LLMs. Coding agents fail from bad context, not bad models.
 
@@ -58,3 +58,7 @@ This project implements Karpathy's **LLM-Wiki pattern** ([[wiki-vs-context-engin
 | MVP scope | Markdown wiki submodule, Obsidian viewer, manual skills | medium | all 3 |
 | Closed loop | Post-MVP session harvesting | medium | Gemini |
 | Embedding dedup | Post-MVP at scale | low | ChatGPT |
+
+## Update (2026-05-25 ingest: claude pipeline plan)
+
+[[2026-05-25-cluade-pipeline-plan|Claude's implementation plan]] converges on **shared pipeline core + three adapters** (UI, automation, MCP) — matching our v2 architecture. Key fork: Claude recommends Open WebUI Pipelines; we shipped a **purpose-built operator** with Ollama (`qwen2.5:7b-instruct`) and human approval gates. MCP is read-heavy sidecar, not primary UI backend.

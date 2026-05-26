@@ -1,9 +1,9 @@
 ---
 type: project-brief
-status: draft
+status: current
 date: 2026-05-24
 export_cycle: 1
-sources_ingested: 3
+sources_ingested: 4
 ---
 
 # Project Brief: Distill-Wiki-Pipeline — LLM-Wiki Pipeline
@@ -22,7 +22,7 @@ This project implements Karpathy's **LLM-Wiki pattern** as a repeatable pipeline
 Multi-LLM collection → Wiki distillation → Human review → Dev context export → Agentic coding → (future) closed-loop harvest
 ```
 
-Three research sources (ChatGPT, Gemini, Claude) all validate the core architecture. The wiki submodule (`wiki/`) is the **compounding knowledge layer** — a persistent markdown graph where contradictions are flagged, decisions recorded, and synthesis evolves across ingest cycles.
+Four research sources across three providers (ChatGPT, Gemini, Claude) + one pipeline implementation plan all validate the core architecture. The wiki submodule (`wiki/`) is the **compounding knowledge layer** — a persistent markdown graph where contradictions are flagged, decisions recorded, and synthesis evolves across ingest cycles.
 
 **North-star metric:** *Can Cursor implement this correctly?* ([[implementation-readiness]])
 

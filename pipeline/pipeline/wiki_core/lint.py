@@ -6,7 +6,7 @@ from pipeline.wiki_core.models import LintFinding, Severity
 from pipeline.wiki_core.paths import WikiPaths
 
 _WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
-_INDEX_ENTRY_RE = re.compile(r"^\s*-\s*\[\[([^\]|]+)")
+_INDEX_ENTRY_RE = re.compile(r"^\s*-\s*\[\[([^\]|]+)", re.MULTILINE)
 
 
 def _wiki_page_paths(paths: WikiPaths) -> list[Path]:
