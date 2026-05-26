@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { getStatus, postSync, type PipelineStatus } from "../api";
+import { getStatus, type PipelineStatus } from "../api";
+import { useNavigate } from "react-router-dom";
 import styles from "./Dashboard.module.css";
 
 export default function Dashboard() {
@@ -26,23 +27,10 @@ export default function Dashboard() {
     void loadStatus();
   }, [loadStatus]);
 
-  async function handleSync() {
-    setSyncing(true);
-    setSyncMessage(null);
-    setError(null);
-    try {
-      const result = await postSync(briefOnly);
-      const warnings =
-        result.warnings.length > 0
-          ? `\nWarnings:\n${result.warnings.join("\n")}`
-          : "";
-      setSyncMessage(`${result.stdout}${warnings}`.trim() || "Sync completed.");
-      await loadStatus();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sync failed");
-    } finally {
-      setSyncing(false);
-    }
+  const navigate = useNavigate();
+  function handleSync() {
+    // Navigate to the Sync page where the sync can be reviewed/run
+    navigate(`/sync?brief_only=${briefOnly ? "1" : "0"}`);
   }
 
   if (loading && !status) {

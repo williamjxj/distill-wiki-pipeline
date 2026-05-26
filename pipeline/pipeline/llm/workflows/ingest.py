@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import inspect
 from datetime import date, datetime
 from pathlib import Path
 
@@ -130,8 +131,26 @@ async def run_draft(job: IngestJob, paths: WikiPaths | None = None) -> None:
         f"Raw body:\n{job.raw_body}\n\n"
         f"Approved analysis:\n{job.analysis}"
     )
-    job.draft = await complete_ollama(INGEST_WRITE_SYSTEM, prompt, task="ingest")
-    job.draft_payload = normalize_draft_payload(extract_json(job.draft), job.raw_path, job.raw_meta or {})
+    complete_kwargs = {"task": "ingest"}
+    if "json_mode" in inspect.signature(complete_ollama).parameters:
+        complete_kwargs["json_mode"] = True
+    job.draft = await complete_ollama(INGEST_WRITE_SYSTEM, prompt, **complete_kwargs)
+    try:
+        payload = extract_json(job.draft)
+    except ValueError:
+        repair_prompt = (
+            f"Raw path: {job.raw_path}\n"
+            f"Source slug: {slug}\n"
+            f"Frontmatter:\n{_json_prompt(job.raw_meta)}\n\n"
+            f"Raw body:\n{job.raw_body}\n\n"
+            f"Approved analysis:\n{job.analysis}\n\n"
+            f"Previous response that was not valid JSON:\n{job.draft}\n\n"
+            "Return exactly one JSON object with the required keys. No prose, no markdown fences."
+        )
+        job.draft = await complete_ollama(INGEST_WRITE_SYSTEM, repair_prompt, **complete_kwargs)
+        payload = extract_json(job.draft)
+
+    job.draft_payload = normalize_draft_payload(payload, job.raw_path, job.raw_meta or {})
     job.state = JobState.DRAFT_DONE
 
 

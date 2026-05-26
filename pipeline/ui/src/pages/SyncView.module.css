@@ -1,0 +1,30 @@
+.page {
+  padding: 24px;
+}
+.help {
+  color: #444;
+  margin-bottom: 12px;
+}
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+}
+.muted {
+  color: #666;
+}
+.output {
+  background: #f6f8fb;
+  padding: 12px;
+  border-radius: 6px;
+  white-space: pre-wrap;
+}
+.error {
+  color: #b00020;
+}

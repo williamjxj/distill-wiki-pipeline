@@ -50,7 +50,7 @@ def sync(brief_only: bool = typer.Option(False, "--brief-only")):
 def serve(host: str = "127.0.0.1", port: int = 8787):
     import uvicorn
 
-    uvicorn.run("pipeline.api.main:app", host=host, port=port, reload=True)
+    uvicorn.run("pipeline.api.main:app", host=host, port=port, reload=False)
 
 
 @app.command()

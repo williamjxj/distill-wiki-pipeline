@@ -7,7 +7,12 @@ import httpx
 from pipeline.wiki_core.paths import load_config
 
 
-async def complete_ollama(system: str, user: str, task: str = "ingest") -> str:
+async def complete_ollama(
+    system: str,
+    user: str,
+    task: str = "ingest",
+    json_mode: bool = False,
+) -> str:
     cfg = load_config()
     base = cfg["llm"]["ollama_base_url"].rstrip("/")
     model = os.environ.get("PIPELINE_OLLAMA_MODEL") or cfg["llm"]["models"]["ollama"]
@@ -22,6 +27,8 @@ async def complete_ollama(system: str, user: str, task: str = "ingest") -> str:
         ],
         "stream": False,
     }
+    if json_mode:
+        payload["format"] = "json"
     async with httpx.AsyncClient(timeout=120) as client:
         resp = await client.post(f"{base}/api/chat", json=payload)
         resp.raise_for_status()

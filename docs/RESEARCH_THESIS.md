@@ -1,8 +1,8 @@
 ---
 type: synthesis
 status: evolving
-last_updated: 2026-05-24
-sources_ingested: 4
+last_updated: 2026-05-26
+sources_ingested: 5
 ---
 
 # Evolving Thesis
@@ -11,7 +11,7 @@ sources_ingested: 4
 
 ## Current Understanding
 
-This project implements Karpathy's **LLM-Wiki pattern** ([[wiki-vs-context-engine]]) as a multi-LLM research → distillation → dev-tool handoff pipeline. All four sources validate the core idea; ChatGPT's "context engine" reframe is product naming, not a different architecture.
+This project implements Karpathy's **LLM-Wiki pattern** ([[wiki-vs-context-engine]]) as a multi-LLM research → distillation → dev-tool handoff pipeline. All three sources validate the core idea; ChatGPT's "context engine" reframe is product naming, not a different architecture.
 
 **Problem:** [[context-fragmentation]] — scattered, duplicated, contradictory research across LLMs. Coding agents fail from bad context, not bad models.
 
@@ -30,6 +30,18 @@ This project implements Karpathy's **LLM-Wiki pattern** ([[wiki-vs-context-engin
 **Operational rhythm:** ingest one source at a time; lint every 3–5 ingests; export-brief for Phase 3 handoff; weekly maintenance.
 
 **MVP** ([[mvp-scope]]): current project-wiki submodule pattern (markdown + git + Obsidian viewer). Add automation incrementally — OpenKB, embedding dedup, session harvesters are post-MVP.
+
+### Thesis Delta ([[distill-ingest]])
+
+Source 5 ([[distill-ingest]]) is a meta-document: it provides the rigorous distillation methodology that the earlier sources advocated for in principle. Key additions:
+
+- **5-signal test** formalizes the [[multi-pass-distillation]] filter step: score every paragraph on Specificity, Actionability, Non-obviousness, Consensus, Contradiction — keep only 3+
+- **Conflict → Decision Space** reframes [[contradictions-tracking]]: LLM disagreements define the design space, not bugs to eliminate
+- **Distillation quality gate** adds concrete criteria to [[human-review-gate]]: zero filler, every tool versioned, tradeoffs explicit, ≥3 gotchas
+- **Canonical file selection matrix** expands [[context-packs]] with tool-specific formats (CLAUDE.md, AGENTS.md, .cursorrules, llms.txt)
+- **Meta-distillation** (LLM distilling LLMs) is a practical shortcut for the existing pipeline
+- **4 tiers of automation** (no-code → agent-assisted → MCP → ETL) provides a maturity ladder for [[mvp-scope]]
+- **Anti-pattern hall of fame** validates several existing design choices (one topic per file, annotation at collection time, git versioning)
 
 ## Open Questions
 
@@ -62,3 +74,6 @@ This project implements Karpathy's **LLM-Wiki pattern** ([[wiki-vs-context-engin
 ## Update (2026-05-25 ingest: claude pipeline plan)
 
 [[2026-05-25-cluade-pipeline-plan|Claude's implementation plan]] converges on **shared pipeline core + three adapters** (UI, automation, MCP) — matching our v2 architecture. Key fork: Claude recommends Open WebUI Pipelines; we shipped a **purpose-built operator** with Ollama (`qwen2.5:7b-instruct`) and human approval gates. MCP is read-heavy sidecar, not primary UI backend.
+
+- **Live Memory Layer**: Emphasize the integration of MCP server tools to make MemWeaver a live memory layer for IDEs, enhancing real-time access to relevant information (Concept: `mcp-server`).
+- **Multi-LLM Workflow**: Highlight the importance of distilling insights from multiple LLMs into canonical files before ingestion (Concept: `distill-canonical` and `multi-llm-workflow`).

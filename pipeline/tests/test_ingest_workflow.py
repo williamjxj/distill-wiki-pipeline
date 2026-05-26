@@ -181,3 +181,25 @@ def test_extract_json_strips_markdown_fence():
 
     payload = extract_json(f"```json\n{json.dumps(DRAFT_JSON)}\n```")
     assert payload["source_md"].startswith("---")
+
+
+def test_approve_analysis_repairs_non_json_draft(monkeypatch, wiki_paths: WikiPaths):
+    calls: list[str] = []
+
+    async def flaky_complete(system: str, user: str, task: str = "ingest") -> str:
+        calls.append(user)
+        if "Approved analysis" in user and len(calls) == 2:
+            return "Draft summary only, no JSON here."
+        return f"```json\n{json.dumps(DRAFT_JSON)}\n```"
+
+    monkeypatch.setattr("pipeline.llm.workflows.ingest.complete_ollama", flaky_complete)
+    monkeypatch.setattr("pipeline.llm.workflows.ingest.resolve_paths", lambda: wiki_paths)
+
+    client = TestClient(create_app())
+    resp = client.post("/api/jobs/ingest", json={"raw_path": RAW_PATH})
+    assert resp.status_code == 200
+    job_id = resp.json()["id"]
+
+    resp = client.post(f"/api/jobs/ingest/{job_id}/approve-analysis")
+    assert resp.status_code == 200
+    assert resp.json()["state"] == JobState.DRAFT_DONE.value

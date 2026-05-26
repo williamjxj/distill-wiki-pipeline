@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import ExportWizard from "./pages/ExportWizard";
 import GraphView from "./pages/GraphView";
+import SyncView from "./pages/SyncView";
 import IngestWizard from "./pages/IngestWizard";
 import LintDashboard from "./pages/LintDashboard";
 import LogViewer from "./pages/LogViewer";
@@ -62,6 +63,7 @@ export default function App() {
         >
           Graph
         </NavLink>
+        {/* Sync accessible from Dashboard; menu item removed to avoid duplication */}
         <NavLink
           to="/log"
           className={({ isActive }) =>
@@ -80,6 +82,7 @@ export default function App() {
           <Route path="/export" element={<ExportWizard />} />
           <Route path="/lint" element={<LintDashboard />} />
           <Route path="/graph" element={<GraphView />} />
+          <Route path="/sync" element={<SyncView />} />
           <Route path="/log" element={<LogViewer />} />
         </Routes>
       </main>
