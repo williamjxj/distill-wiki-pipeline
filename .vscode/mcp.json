@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "wiki-pipeline": {
+      "type": "stdio",
+      "command": "/Users/william.jiang/my-tests/experimental-app/pipeline/venv/bin/python",
+      "args": ["-m", "pipeline.mcp.server"]
+    }
+  }
+}
