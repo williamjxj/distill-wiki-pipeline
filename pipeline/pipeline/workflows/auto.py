@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncGenerator
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
@@ -161,7 +162,143 @@ async def auto_export(paths: WikiPaths | None = None) -> ExportJob:
     return job
 
 
-# ── full pipeline ────────────────────────────────────────────────────────
+# ── streaming pipeline (single source of truth) ─────────────────────────
+
+
+def _yield_step(event_type: str, step: str, status: str, message: str) -> dict:
+    return {"event": event_type, "step": step, "status": status, "message": message}
+
+
+def _yield_log(line: str) -> dict:
+    return {"event": "log", "line": line}
+
+
+async def stream_auto_pipeline(
+    file_spec: str,
+    paths: WikiPaths | None = None,
+) -> AsyncGenerator[dict, None]:
+    """Async generator that yields event dicts for the full pipeline.
+
+    ``file_spec`` is either ``"all"`` (process all pending) or a wiki-root-relative
+    path to a single raw file.
+
+    Each yielded dict has ``{"event": "step"|"log"|"result", ...}``.
+    """
+    wiki_paths = paths or resolve_paths()
+    total_errors = 0
+    total_warnings = 0
+    files_processed = 0
+
+    if file_spec == "all":
+        items = _pending_raw_paths(wiki_paths)
+        if not items:
+            yield _yield_log("No pending raw files to process")
+            yield {"event": "result", "status": "completed",
+                   "summary": {"files_processed": 0, "errors": 0, "warnings": 0}}
+            return
+        file_list = items
+        yield _yield_log(f"Found {len(file_list)} pending file(s)")
+    else:
+        raw_abs = (wiki_paths.wiki_root / file_spec).resolve()
+        file_list = [(raw_abs, {})]
+        yield _yield_log(f"Processing: {file_spec}")
+
+    for abs_path, _meta in file_list:
+        rel = _rel_to_root(wiki_paths, abs_path)
+        slug = rel.rsplit("/", 1)[-1].replace(".md", "")
+        files_processed += 1
+
+        # ── 1  Frontmatter ───────────────────────────────────────────────
+        yield _yield_step("step", "frontmatter", "running", f"Injecting frontmatter for {rel}")
+        _ensure_frontmatter(abs_path, wiki_paths)
+        yield _yield_step("step", "frontmatter", "done", "✓ Frontmatter injected")
+
+        # ── 2  Ingest ─────────────────────────────────────────────────────
+        yield _yield_step("step", "ingest", "running", f"Ingesting {rel}...")
+        yield _yield_log(f"  auto  | ingest  {rel}")
+        try:
+            ingest_job = await auto_ingest(rel, wiki_paths)
+        except Exception as exc:
+            yield _yield_step("step", "ingest", "failed", f"✗ Ingest failed: {exc}")
+            yield _yield_log(f"         └ FAILED  {exc}")
+            total_errors += 1
+            continue
+        if ingest_job.state == JobState.FAILED:
+            yield _yield_step("step", "ingest", "failed", f"✗ Ingest failed: {ingest_job.error}")
+            yield _yield_log(f"         └ FAILED  {ingest_job.error}")
+            total_errors += 1
+            continue
+        yield _yield_step("step", "ingest", "done", "✓ Ingest complete")
+        yield _yield_log(f"         └ {ingest_job.state.value}")
+
+        # ── 3  Lint (post-ingest) ────────────────────────────────────────
+        yield _yield_step("step", "lint", "running", "Running lint...")
+        lint_results = run_lint(wiki_paths)
+        errs = sum(1 for f in lint_results if f.severity.name == "ERROR")
+        warns = sum(1 for f in lint_results if f.severity.name == "WARNING")
+        total_errors += errs
+        total_warnings += warns
+        yield _yield_step("step", "lint", "done", f"✓ Lint: {errs} errors, {warns} warnings")
+        yield _yield_log(f"  auto  | lint     {errs} errors, {warns} warnings")
+
+    # ── 4  Export (only when no more pending files remain) ────────────────
+    remaining = _pending_raw_paths(wiki_paths)
+    if remaining:
+        yield _yield_step("step", "export", "skipped",
+                          f"→ Skipped: {len(remaining)} pending file(s) remain")
+        yield _yield_log(f"  auto  | {len(remaining)} pending file(s) remain — skipping export")
+    else:
+        yield _yield_step("step", "export", "running", "Exporting project brief...")
+        yield _yield_log("  auto  | export   project brief")
+        try:
+            export_job = await auto_export(wiki_paths)
+        except Exception as exc:
+            yield _yield_step("step", "export", "failed", f"✗ Export failed: {exc}")
+            yield _yield_log(f"         └ FAILED  {exc}")
+            total_errors += 1
+            yield {"event": "result", "status": "failed",
+                   "summary": {"files_processed": files_processed, "errors": total_errors, "warnings": total_warnings}}
+            return
+        yield _yield_step("step", "export", "done",
+                          f"✓ Export cycle {export_job.export_cycle}")
+        yield _yield_log(f"         └ cycle {export_job.export_cycle}")
+
+        # ── 5  Lint (post-export) ────────────────────────────────────────
+        yield _yield_step("step", "lint2", "running", "Running post-export lint...")
+        lint2 = run_lint(wiki_paths)
+        errs2 = sum(1 for f in lint2 if f.severity.name == "ERROR")
+        warns2 = sum(1 for f in lint2 if f.severity.name == "WARNING")
+        total_errors += errs2
+        total_warnings += warns2
+        yield _yield_step("step", "lint2", "done", f"✓ Lint: {errs2} errors, {warns2} warnings")
+        yield _yield_log(f"  auto  | lint     {errs2} errors, {warns2} warnings")
+
+        # ── 6  Graph ─────────────────────────────────────────────────────
+        yield _yield_step("step", "graph", "running", "Building knowledge graph...")
+        graph_data = build_graph(wiki_paths)
+        graph_msg = f"{len(graph_data['nodes'])} nodes, {len(graph_data['edges'])} edges"
+        yield _yield_step("step", "graph", "done", f"✓ Graph: {graph_msg}")
+        yield _yield_log(f"  auto  | graph    {graph_msg}")
+
+        # ── 7  Sync ──────────────────────────────────────────────────────
+        yield _yield_step("step", "sync", "running", "Syncing to docs/...")
+        try:
+            sync_result = run_sync(wiki_paths)
+        except Exception as exc:
+            yield _yield_step("step", "sync", "failed", f"✗ Sync failed: {exc}")
+            yield _yield_log(f"         └ FAILED  {exc}")
+            total_errors += 1
+            yield {"event": "result", "status": "failed",
+                   "summary": {"files_processed": files_processed, "errors": total_errors, "warnings": total_warnings}}
+            return
+        yield _yield_step("step", "sync", "done", "✓ Sync completed")
+        yield _yield_log("  auto  | sync     completed")
+
+    yield {"event": "result", "status": "completed",
+           "summary": {"files_processed": files_processed, "errors": total_errors, "warnings": total_warnings}}
+
+
+# ── CLI wrappers ────────────────────────────────────────────────────────
 
 
 async def run_pipeline(
@@ -171,78 +308,37 @@ async def run_pipeline(
     """Run the full pre-approved pipeline for one raw file::
 
         ingest → lint → export → lint → graph → sync
+
+    Legacy CLI wrapper around :func:`stream_auto_pipeline`.
     """
-    wiki_paths = paths or resolve_paths()
-    results: dict = {}
-
-    # 1  Ingest
-    print(f"  auto  | ingest  {raw_rel_path}")
-    ingest_job = await auto_ingest(raw_rel_path, wiki_paths)
-    slug = raw_rel_path.rsplit("/", 1)[-1].replace(".md", "")
-    results["ingest"] = {"slug": slug, "state": ingest_job.state.value}
-    if ingest_job.state == JobState.FAILED:
-        print(f"         └ FAILED  {ingest_job.error}")
-        return results
-    print(f"         └ {ingest_job.state.value}")
-
-    # 2  Lint
-    lint_results = run_lint(wiki_paths)
-    errs = sum(1 for f in lint_results if f.severity.name == "ERROR")
-    warns = sum(1 for f in lint_results if f.severity.name == "WARNING")
-    results["lint"] = {"errors": errs, "warnings": warns}
-    print(f"  auto  | lint     {errs} errors, {warns} warnings")
-
-    # 3  Export only when no more pending files remain
-    remaining = _pending_raw_paths(wiki_paths)
-    if remaining:
-        print(f"  auto  | {len(remaining)} pending file(s) remain — skipping export")
-        results["export"] = {"skipped": True, "reason": f"{len(remaining)} pending remain"}
-    else:
-        print("  auto  | export   project brief")
-        export_job = await auto_export(wiki_paths)
-        results["export"] = {
-            "state": export_job.state.value,
-            "cycle": export_job.export_cycle,
-        }
-        print(f"         └ cycle {export_job.export_cycle}")
-
-        # 4  Lint (post-export)
-        lint2 = run_lint(wiki_paths)
-        errs2 = sum(1 for f in lint2 if f.severity.name == "ERROR")
-        warns2 = sum(1 for f in lint2 if f.severity.name == "WARNING")
-        results["lint_post_export"] = {"errors": errs2, "warnings": warns2}
-        print(f"  auto  | lint     {errs2} errors, {warns2} warnings")
-
-        # 5  Graph
-        graph_data = build_graph(wiki_paths)
-        results["graph"] = {"nodes": len(graph_data["nodes"]), "edges": len(graph_data["edges"])}
-        print(f"  auto  | graph    {results['graph']['nodes']} nodes, {results['graph']['edges']} edges")
-
-        # 6  Sync
-        sync_result = run_sync(wiki_paths)
-        results["sync"] = {"warnings": list(sync_result.warnings)}
-        print("  auto  | sync     completed")
-
-    return results
+    summary = {}
+    async for event in stream_auto_pipeline(raw_rel_path, paths):
+        if event["event"] == "log":
+            print(event["line"])
+        elif event["event"] == "step":
+            if event["step"] not in summary:
+                summary[event["step"]] = event["status"]
+            if event["status"] in ("failed", "done", "skipped"):
+                print(f"         └ {event['message']}")
+        elif event["event"] == "result":
+            return event["summary"]
+    return summary
 
 
 async def process_all_pending(paths: WikiPaths | None = None) -> list[dict]:
-    """Process every pending raw file through the full pipeline."""
-    wiki_paths = paths or resolve_paths()
-    items = _pending_raw_paths(wiki_paths)
-    if not items:
-        print("  auto  | no pending raw files")
-        return []
+    """Process every pending raw file through the full pipeline.
 
+    Legacy CLI wrapper around :func:`stream_auto_pipeline`.
+    """
     results: list[dict] = []
-    for abs_path, _meta in items:
-        rel = _rel_to_root(wiki_paths, abs_path)
-        try:
-            result = await run_pipeline(rel, wiki_paths)
-        except Exception as exc:
-            print(f"  auto  | FAILED   {rel} — {exc}")
-            result = {"error": str(exc)}
-        results.append(result)
+    async for event in stream_auto_pipeline("all", paths):
+        if event["event"] == "log":
+            print(event["line"])
+        elif event["event"] == "step":
+            if event["status"] in ("failed", "done", "skipped"):
+                print(f"         └ {event['message']}")
+        elif event["event"] == "result":
+            results.append(event["summary"])
     return results
 
 

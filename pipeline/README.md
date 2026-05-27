@@ -22,18 +22,103 @@ pipeline/
 
 **Principle:** `wiki_core` is the single source of truth. CLI, API, MCP, and LLM workflows all call into it.
 
-## Workflow
+## Workflows
+
+### Manual (step-by-step)
 
 ```mermaid
-flowchart LR
-    A[raw/ pending] --> B[Ingest wizard]
-    B --> C[wiki/sources + concepts + thesis]
-    C --> D[Lint]
-    D --> E[Export brief]
-    E --> F[Sync to docs/]
-    F --> G[Build in parent repo]
-    G --> A
+flowchart TD
+    subgraph Collect
+        A1[Drop .md into raw/llm/ or raw/web/] --> A2[File has YAML frontmatter?]
+        A2 -- yes --> A3[Validate status: pending]
+        A2 -- no --> A4[Inject frontmatter] --> A3
+    end
+
+    subgraph Ingest[Ingest — 2 LLM passes, 2 human gates]
+        direction LR
+        B1[Analyze<br>LLM structural analysis<br>no writes] --> B2{Approve?}
+        B2 -- operator approves --> B3[Draft<br>LLM generates source + concepts + thesis]
+        B3 --> B4{Approve?}
+        B4 -- operator approves<br>optional edits --> B5[Write wiki files<br>Set raw status: ingested]
+        B2 -- reject --> B1
+        B4 -- reject --> B3
+    end
+
+    subgraph Lint
+        C[Deterministic checks<br>missing wikilinks, orphans, index sync]
+    end
+
+    subgraph Export[Export — 1 LLM pass, 1 human gate]
+        direction LR
+        D1[LLM drafts project-brief.md] --> D2{Approve?}
+        D2 -- operator approves --> D3[Promote status to current]
+        D2 -- reject --> D1
+    end
+
+    subgraph Sync
+        E[Copy synthesis → docs/]
+    end
+
+    A3 --> B1
+    B5 --> C --> D1
+    D3 --> E
 ```
+
+### Auto pipeline (pre-approved)
+
+```mermaid
+flowchart TD
+    subgraph AutoCollect[Collect]
+        F1[Drop .md into raw/llm/ or raw/web/] --> F2[Auto-inject frontmatter<br>source/type from directory<br>topic from H1<br>date from today]
+    end
+
+    subgraph AutoIngest[Ingest — 2 LLM passes, no human gates]
+        direction LR
+        G1[Analyze<br>LLM structural analysis] --> G2[Draft<br>LLM generates content]
+        G2 --> G3[Auto-approve draft] --> G4[Write wiki files]
+    end
+
+    subgraph AutoLint1[Lint]
+        H[Deterministic checks]
+    end
+
+    subgraph AutoExport[Export — deferred until all files ingested]
+        direction LR
+        I1[LLM drafts project-brief.md] --> I2[Auto-approve<br>Promote to current]
+    end
+
+    subgraph AutoLint2[Lint]
+        J[Deterministic checks]
+    end
+
+    subgraph AutoGraph[Graph]
+        K[Build wikilink knowledge graph<br>nodes + edges]
+    end
+
+    subgraph AutoSync[Sync]
+        L[Copy synthesis → docs/]
+    end
+
+    F2 --> G1
+    G4 --> H --> I1
+    I2 --> J --> K --> L
+```
+
+### Comparison
+
+| Step | Manual (step-by-step) | Auto pipeline |
+|------|-----------------------|---------------|
+| **Frontmatter** | Injected on upload (UI form) | Auto-injected from directory, H1, today's date |
+| **Ingest: Analyze** | LLM pass — structural analysis | Same LLM pass |
+| **Gate** | Human approves/edits analysis | Skipped — auto-approves |
+| **Ingest: Draft** | LLM pass — generates content | Same LLM pass |
+| **Gate** | Human approves/edits draft | Skipped — auto-approves |
+| **Ingest: Write** | Writes source + concepts + thesis | Same write step |
+| **Lint** | Post-ingest, deterministic | Post-ingest **and** post-export |
+| **Export** | 1 LLM pass + human approval gate | 1 LLM pass + auto-approve (deferred until all files ingested) |
+| **Knowledge graph** | Not built | Built after export |
+| **Sync** | Manual `wiki-pipeline sync` | Automatically copies to `docs/` |
+| **Failure handling** | Stops at each gate — operator decides | Marks file failed, continues batch |
 
 ### 1. Collect
 
@@ -57,7 +142,7 @@ One raw file per job, two LLM passes with approval between stages:
 
 **API:** `POST /api/jobs/ingest` → approve-analysis → approve-draft → confirm
 
-**Auto (pre-approved):** `wiki-pipeline auto --file <path>` — see [auto pipeline](#7-auto-pipeline-pre-approved) below
+**Auto (pre-approved):** `wiki-pipeline auto --file <path>` — see [auto pipeline](#auto-pipeline-pre-approved) below
 
 ### 3. Lint
 

@@ -33,6 +33,43 @@
   font-weight: 600;
 }
 
+.divider {
+  width: 1px;
+  height: 1.25rem;
+  background: var(--border);
+}
+
+.groupLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.autoLink {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.autoLink:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.autoActive {
+  color: #0052cc;
+  border-color: #0052cc;
+  background: #eaf4ff;
+  font-weight: 600;
+}
+
 .main {
   flex: 1;
   padding: 1.5rem;

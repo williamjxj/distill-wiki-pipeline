@@ -1,0 +1,286 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.page h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+/* ── Upload form ──────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.uploadSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.uploadSection h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.uploadForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.field,
+.fieldWide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.field input,
+.field select,
+.fieldWide input {
+  font: inherit;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.uploadActions {
+  grid-column: 1 / -1;
+}
+
+/* ── Controls ─────────────────────── */
+
+.controls {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--surface);
+}
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.select {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--bg);
+  min-width: 16rem;
+}
+
+.select:disabled {
+  opacity: 0.6;
+}
+
+.runButton {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  background: #0052cc;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.runButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.runButton:not(:disabled):hover {
+  background: #0047b3;
+}
+
+.cancelButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: var(--surface);
+}
+
+.refreshButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.refreshButton:hover {
+  background: var(--surface);
+}
+
+/* ── Stepper ──────────────────────── */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.stepPending {
+  opacity: 0.5;
+}
+
+.stepRunning {
+  border-color: #0052cc;
+  background: #eaf4ff;
+  font-weight: 600;
+}
+
+.stepDone {
+  border-color: #6fcf97;
+  background: #e6f9ee;
+}
+
+.stepFailed {
+  border-color: #fecdca;
+  background: #fef3f2;
+  font-weight: 600;
+}
+
+.stepSkipped {
+  border-color: #fedf89;
+  background: #fffaeb;
+}
+
+.stepIcon {
+  font-size: 0.8125rem;
+  width: 1rem;
+  text-align: center;
+}
+
+.stepLabel {
+  line-height: 1;
+}
+
+/* ── Log output ───────────────────── */
+
+.logSection {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--surface);
+}
+
+.logOutput {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  max-height: 24rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Result banner ────────────────── */
+
+.resultBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+.resultSuccess {
+  border-color: #6fcf97;
+  background: #e6f9ee;
+  color: #067647;
+}
+
+.resultFailed {
+  border-color: #fecdca;
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.resultIcon {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.resultBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.resultBody strong {
+  font-size: 1rem;
+}
+
+.resultBody p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* ── Utilities ────────────────────── */
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}

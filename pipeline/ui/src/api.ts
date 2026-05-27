@@ -187,3 +187,11 @@ export function uploadRaw(formData: FormData): Promise<UploadRawResult> {
     return response.json() as Promise<UploadRawResult>;
   });
 }
+
+export function runAutoPipeline(file: string): Promise<Response> {
+  return fetch(`${API_BASE}/api/auto`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ file }),
+  });
+}

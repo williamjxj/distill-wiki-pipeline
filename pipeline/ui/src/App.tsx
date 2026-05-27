@@ -1,4 +1,5 @@
 import { NavLink, Route, Routes } from "react-router-dom";
+import AutoPipeline from "./pages/AutoPipeline";
 import Dashboard from "./pages/Dashboard";
 import ExportWizard from "./pages/ExportWizard";
 import GraphView from "./pages/GraphView";
@@ -23,6 +24,24 @@ export default function App() {
         >
           Dashboard
         </NavLink>
+
+        <span className={styles.divider} />
+
+        <span className={styles.groupLabel}>Auto</span>
+        <NavLink
+          to="/auto"
+          className={({ isActive }) =>
+            isActive
+              ? `${styles.autoLink} ${styles.autoActive}`
+              : styles.autoLink
+          }
+        >
+          Auto Pipeline
+        </NavLink>
+
+        <span className={styles.divider} />
+
+        <span className={styles.groupLabel}>Manual</span>
         <NavLink
           to="/raw"
           className={({ isActive }) =>
@@ -80,6 +99,7 @@ export default function App() {
           <Route path="/raw" element={<RawQueue />} />
           <Route path="/ingest" element={<IngestWizard />} />
           <Route path="/export" element={<ExportWizard />} />
+          <Route path="/auto" element={<AutoPipeline />} />
           <Route path="/lint" element={<LintDashboard />} />
           <Route path="/graph" element={<GraphView />} />
           <Route path="/sync" element={<SyncView />} />

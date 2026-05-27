@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import inspect
 from datetime import date, datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from pipeline.api.jobs import IngestJob, JobState, JobStore
 from pipeline.llm.prompts.ingest import INGEST_ANALYSIS_SYSTEM, INGEST_WRITE_SYSTEM
@@ -138,6 +141,7 @@ async def run_draft(job: IngestJob, paths: WikiPaths | None = None) -> None:
     try:
         payload = extract_json(job.draft)
     except ValueError:
+        logger.warning("Initial draft LLM response not valid JSON: %.200s", job.draft)
         repair_prompt = (
             f"Raw path: {job.raw_path}\n"
             f"Source slug: {slug}\n"
@@ -147,8 +151,19 @@ async def run_draft(job: IngestJob, paths: WikiPaths | None = None) -> None:
             f"Previous response that was not valid JSON:\n{job.draft}\n\n"
             "Return exactly one JSON object with the required keys. No prose, no markdown fences."
         )
-        job.draft = await complete_ollama(INGEST_WRITE_SYSTEM, repair_prompt, **complete_kwargs)
-        payload = extract_json(job.draft)
+        # Retry without json_mode — some models produce worse output under strict mode
+        retry_kwargs: dict[str, object] = {"task": "ingest"}
+        if "json_mode" in inspect.signature(complete_ollama).parameters:
+            retry_kwargs["json_mode"] = False
+        job.draft = await complete_ollama(INGEST_WRITE_SYSTEM, repair_prompt, **retry_kwargs)
+        try:
+            payload = extract_json(job.draft)
+        except ValueError:
+            logger.error("Repair draft LLM response still not valid JSON: %s", job.draft)
+            raise ValueError(
+                "No JSON object found in LLM response after repair attempt.\n"
+                f"Raw response:\n{job.draft[:800]}"
+            ) from None
 
     job.draft_payload = normalize_draft_payload(payload, job.raw_path, job.raw_meta or {})
     job.state = JobState.DRAFT_DONE

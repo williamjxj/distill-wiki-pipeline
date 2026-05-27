@@ -11,7 +11,7 @@ def list_pending():
     items = []
     for raw_path in list_raw_files([paths.raw_llm, paths.raw_web]):
         meta, _ = read_markdown(raw_path)
-        if meta.get("status") == "pending":
+        if meta.get("status") == "pending" or meta.get("status") is None:
             items.append({
                 "path": str(raw_path.relative_to(paths.wiki_root)),
                 "meta": meta,
