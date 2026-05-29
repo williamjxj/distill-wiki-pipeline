@@ -1,66 +1,69 @@
 ---
 type: project-brief
 status: current
-date: '2026-05-26'
-export_cycle: 3
-sources_ingested: 8
+date: 2026-05-29
+export_cycle: 4
+sources_ingested: 9
 ---
 
 # Project Brief: LLM-Wiki Handoff Pipeline
 
 ## Problem
 
-The problem addressed by this project is **context fragmentation** in AI-assisted engineering, where engineers face scattered, duplicated, and contradictory inputs from various sources like ChatGPT, Claude, Gemini, Reddit, GitHub, PDFs, and more. This context fragmentation leads to incomplete architecture, conflicting instructions, and ultimately, agent failure during implementation.
+**Context fragmentation** — engineers collect scattered, duplicated, contradictory outputs from multiple LLMs (ChatGPT, Claude, Gemini), web articles, docs, PDFs, and notes with no canonical source of truth. Coding agents fail because they receive bad context: incomplete architecture, conflicting instructions, and noisy raw chat dumps. The core problem is not model capability — it's context engineering.
 
 ## Current Understanding
 
-- **Evolving Thesis:** The project implements Karpathy's LLM-Wiki pattern as a multi-LLM research → distillation → dev-tool handoff pipeline.
-- **Key Concepts:**
-  - **Problem:** Context fragmentation is the biggest challenge in AI-assisted engineering.
-  - **Solution:** A compounding knowledge layer (wikis) directly addresses this issue by avoiding feeding raw contradictory transcripts to development agents.
-  - **Epistemic Framing:** LLM outputs are treated as synthetic first-pass knowledge, and wiki distillation is where truth emerges.
+The project builds Karpathy's **LLM-Wiki pattern** as a multi-LLM research → distillation → dev-tool handoff pipeline. 9 sources across 3 LLMs and 2 web articles converge on a unified architecture:
+
+- **Epistemic foundation**: LLM outputs are first-pass synthetic knowledge, not ground truth ([[llm-outputs-as-synthetic-sources]]). Signal emerges only through distillation.
+- **Pipeline**: Multi-LLM Collection → [[two-stage-ingestion]] (analysis → generation) → [[multi-pass-distillation]] with [[semantic-deduplication]] → [[decision-records]] with source attribution → [[context-packs]] → dev tools.
+- **Knowledge layer**: A [[compounding-knowledge-layer]] (persistent markdown graph) replaces ephemeral RAG. [[contradictions-tracking]] with UNRESOLVED/SUPERSEDED flags, [[decision-records]] with provenance, and decay-weighted confidence scoring.
+- **Disciplines**: [[human-review-gate]] with concrete quality criteria (zero filler, versioned tools, explicit tradeoffs, ≥3 gotchas). Ingest one at a time. Lint every 3–5 ingests. Never feed unreviewed synthesis to code agents.
+- **North star**: [[implementation-readiness]] — "Can Cursor implement this correctly?"
 
 ## Chosen Approach
 
-- **Unified Pipeline:**
-  1. **Multi-LLM Collection:** Collect data from multiple LLMs with identical prompts → immutable `raw/llm/`.
-  2. **Wiki Distillation:** Use multi-pass distillation to clean and integrate data into a persistent markdown graph.
-  3. **Compounding Knowledge Layer:** Build a dynamic, AI-maintained knowledge base that avoids context pollution.
-  4. **Human Review Gate:** Ensure the synthesized knowledge is free of contradictions and ready for dev tools.
-  5. **Dev Tools Handoff:** Export compendiums like `AGENTS.md`, architecture documents, tasks lists, etc., to guide development.
-  6. **Closed-Loop Harvesting:** Use developer session logs to keep the wiki evergreen.
+**Pipeline architecture** ([[pipeline-operator]]): Python core module with three interfaces — CLI (argparse/typer), Open WebUI Pipelines plugin, MCP server (fastmcp). All call into shared `pipeline/runner.py`. Build order: core → CLI → MCP → Web UI.
+
+**Ingestion** ([[two-stage-ingestion]]): Stage 1 (read-only structural analysis → blueprint), Stage 2 (execute blueprint, write pages, update links). [[purpose-steering]] via dedicated `purpose.md` file read before every ingest.
+
+**Distillation** ([[multi-pass-distillation]]): Collect (20 min, same 3–5 seed questions across LLMs) → Filter (10 min, 5-signal test: Specificity, Actionability, Non-obviousness, Consensus, Contradiction) → Distill (30 min, synthesize, frame conflicts as tradeoffs) → Canonical (15 min, dense markdown with frontmatter, facts, code, tradeoffs, gotchas). ~80 min per topic.
+
+**Compression** ([[context-compression]]): Two-level — research pipeline (10K pages → 20 pages → 2 pages) and API call level (sliding window, summarization, hard truncation).
+
+**Context delivery** ([[context-packs]]): Per-module bundles (architecture, APIs, schema, constraints, conventions, implementation order) + standardized exports (llms.txt, llms-full.txt, graph.jsonld) + portable SKILL.md packages + tool-specific integration files (CLAUDE.md, .cursorrules, AGENTS.md).
+
+**Closed loop** ([[closed-loop-harvesting]]): Dev session logs harvested back into `raw/sessions/` for re-ingestion, flagging discrepancies between generated code and planned architecture.
 
 ## Constraints
 
-- The project must handle context fragmentation effectively by avoiding raw contradictory transcripts.
-- All LLM outputs are treated as synthetic first-pass knowledge that requires distillation and verification.
-- Dev tools need scoped, compressed context bundles for implementation readiness rather than full wikis or raw research dumps.
+- All content is markdown + git (human-readable, version-controlled, no vendor lock-in)
+- CLI-first: UI comes post-MVP ([[mvp-scope]])
+- Local-first: MCP server runs locally, no external hosting needed
+- Tool-agnostic: works with Cursor, Claude Code, OpenCode, VS Code Copilot
+- Pipeline quality over features: dirty-only reprocessing to avoid token waste
 
 ## Non-Goals
 
-- **No Raw Data Dump:** Do not directly feed raw LLM outputs to dev agents; they must be distilled and verified through human review.
-- **No Static Human Wiki:** Avoid treating the wiki as a static, manually organized resource. It should be AI-maintained and compounding knowledge.
+- Full vector database or graph database in MVP (threshold: ~hundreds of pages)
+- Automated collection from LLM APIs (manual paste for now)
+- Real-time collaboration or multi-user features
+- Obsidian plugin development (Obsidian as viewer, not a dependency)
+- Commercial product packaging (infrastructure for now)
 
 ## Rejected Alternatives
 
-- **Context Engine vs. Wiki:** ChatGPT suggests evolving to a "context engine" rather than a traditional wiki, but this does not change the core architecture.
-- **Embedding Dedup Early:** Delay embedding-based deduplication until MVP for resource management reasons.
-- **Open WebUI Pipelines:** Claude's recommendation of Open WebUI Pipelines is seen as an optional acceleration layer and not a core requirement.
+| Alternative | Why Rejected |
+|-------------|-------------|
+| AnythingLLM for Web UI | Open WebUI Pipelines maps better to ETL stages; AnythingLLM is for RAG/Q&A |
+| Pure RAG pipeline | Ephemeral — doesn't compound knowledge across sessions |
+| Ollama-only stack | Too slow for production use; cloud LLMs for reasoning, Ollama for background tasks |
+| "Wiki" as product name | Kept as architectural name; "Context Engine" acknowledged for future product positioning |
 
 ## Open Questions
 
-- When to add embedding-based dedup (ChatGPT) vs staying LLM-only for MVP?
-- Which external tool to evaluate first: OpenKB, Nashsu, Pratiyush, obsidian-llm-wiki, qmd?
-- How to implement closed-loop harvesting for Cursor session logs?
-- Should `purpose.md` live in the parent project root or wiki submodule?
-- Phase 3 compile automation — prompt template vs script vs export-brief skill?
-- Karpathy's original gist not yet ingested as primary source — worth adding?
-
-## Chosen Approach
-
-- **LLM-Wiki Naming:** Adopt LLM-Wiki naming and structure.
-- **Five Stage Distillation Pipeline:** Implement a five-stage pipeline (raw → clustered → summarized → canonicalized → implementation-oriented).
-- **Human Review Gate:** Mandatory human review before exporting to dev tools.
-- **Context Compressed Packs:** Targeted context packs for each task, not the full wiki.
-
-By addressing these constraints and open questions, we ensure a robust and effective handoff pipeline that leverages AI in a structured manner.
+1. Should seed questions be stored as templates for repeatable multi-LLM collection?
+2. What is the right threshold for automatic supersession vs human-resolved contradiction?
+3. How should confidence scores be calibrated across different LLM sources?
+4. What's the optimal chunk size for embedding-based dedup in this domain?

@@ -65,7 +65,7 @@ def run_lint(paths: WikiPaths) -> list[LintFinding]:
                 message=f"Wikilink [[{link}]] has no matching page",
             ))
 
-    exempt = {"evolving-thesis", "project-brief", "index"}
+    exempt = {"evolving-thesis", "project-brief", "project-details", "index"}
     for slug, count in inbound.items():
         if count == 0 and slug not in exempt:
             findings.append(LintFinding(
